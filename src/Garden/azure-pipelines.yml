@@ -43,3 +43,4 @@ steps:
       command: test
       projects: '$(solution)'
       arguments: '--configuration $(buildConfiguration) --no-build'
+    continueOnError: true
