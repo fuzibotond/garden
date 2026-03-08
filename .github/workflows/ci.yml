@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/Garden/Garden.sln
+
+      - name: Build
+        run: dotnet build src/Garden/Garden.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test src/Garden/Garden.sln --no-build --configuration Release
+
+      - name: Build Docker image
+        run: docker build -f src/Garden/Garden.Api/Dockerfile -t garden-api:ci .

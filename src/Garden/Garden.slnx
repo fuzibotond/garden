@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="../../tests/Garden.Api.Tests/Garden.Api.Tests.csproj" />
   <Project Path="Garden.Api/Garden.Api.csproj" />
   <Project Path="Garden.BuildingBlocks/Garden.BuildingBlocks.csproj" />
   <Project Path="Garden.Modules.Clients/Garden.Modules.Clients.csproj" />
