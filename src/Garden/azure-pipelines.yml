@@ -1,0 +1,45 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+  solution: src/Garden/Garden.sln
+
+steps:
+  - task: UseDotNet@2
+    displayName: Use .NET SDK
+    inputs:
+      packageType: sdk
+      version: '10.x'
+
+  - task: DotNetCoreCLI@2
+    displayName: Restore
+    inputs:
+      command: restore
+      projects: '$(solution)'
+
+  - task: DotNetCoreCLI@2
+    displayName: Build
+    inputs:
+      command: build
+      projects: '$(solution)'
+      arguments: '--configuration $(buildConfiguration) --no-restore'
+
+  - task: DotNetCoreCLI@2
+    displayName: Test
+    inputs:
+      command: test
+      projects: '$(solution)'
+      arguments: '--configuration $(buildConfiguration) --no-build'
