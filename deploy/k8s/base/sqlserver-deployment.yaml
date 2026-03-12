@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garden-sqlserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garden-sqlserver
+  template:
+    metadata:
+      labels:
+        app: garden-sqlserver
+    spec:
+      containers:
+        - name: garden-sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              value: "YourStrong!Passw0rd"

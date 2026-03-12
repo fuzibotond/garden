@@ -1,0 +1,5 @@
+resources:
+  - garden-api-deployment.yaml
+  - garden-api-service.yaml
+  - sqlserver-deployment.yaml
+  - sqlserver-service.yaml

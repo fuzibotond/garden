@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: garden-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: garden-api
+  template:
+    metadata:
+      labels:
+        app: garden-api
+    spec:
+      containers:
+        - name: garden-api
+          image: garden-api:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: Jwt__Key
+              value: "super-secret-dev-key-please-change-this-123456789"
+            - name: Jwt__Issuer
+              value: "Garden.Api"
+            - name: Jwt__Audience
+              value: "Garden.App"
+            - name: ConnectionStrings__GardenDb
+              value: "Server=garden-sqlserver,1433;Database=GardenDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"

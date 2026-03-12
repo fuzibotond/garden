@@ -1,0 +1,10 @@
+namespace: garden-qa
+
+resources:
+  - ../../base
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+
+patches:
+  - path: patch-api-env.yaml
