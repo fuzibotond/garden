@@ -20,15 +20,20 @@ jobs:
 
       - name: Build QA Docker image
         run: docker build -f src/Garden/Garden.Api/Dockerfile -t garden-api:qa .
-
-      - name: Update image in QA deployment
-        run: kubectl set image deployment/garden-api garden-api=garden-api:qa -n garden-qa
+        shell: cmd
 
       - name: Apply QA manifests
         run: kubectl apply -k deploy/k8s/overlays/qa
+        shell: cmd
+
+      - name: Update image in QA deployment
+        run: kubectl set image deployment/garden-api garden-api=garden-api:qa -n garden-qa
+        shell: cmd
 
       - name: Restart API deployment
         run: kubectl rollout restart deployment/garden-api -n garden-qa
+        shell: cmd
 
       - name: Wait for rollout
-        run: kubectl rollout status deployment/garden-api -n garden-qa
+        run: kubectl rollout status deployment/garden-api -n garden-qa --timeout=120s
+        shell: cmd
