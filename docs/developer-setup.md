@@ -9,7 +9,6 @@ QA API: http://localhost:81
 
 DEV uses database: GardenDevDb
 QA uses database: GardenQaDb
-```
 
 ---
 
