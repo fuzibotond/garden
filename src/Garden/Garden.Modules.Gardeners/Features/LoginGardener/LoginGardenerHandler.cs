@@ -29,7 +29,7 @@ public class LoginGardenerHandler
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.Email))
-            throw new ArgumentException("Email is required.");
+            throw new ArgumentException("EMAIL is required.");
 
         if (string.IsNullOrWhiteSpace(request.Password))
             throw new ArgumentException("Password is required.");
