@@ -10,9 +10,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using System.Security.Claims;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env.local");
+
+    if (File.Exists(envPath))
+    {
+        Env.Load(envPath);
+    }
+    else
+    {
+        Console.WriteLine($".env.local not found at: {envPath}");
+    }
+}
+
+builder.Configuration.AddEnvironmentVariables();
+Console.WriteLine($"Jwt key loaded: {builder.Configuration["Jwt:Key"] is not null}");
+Console.WriteLine($"Connection string loaded: {builder.Configuration.GetConnectionString("GardenDb") is not null}");
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -91,8 +109,18 @@ app.MapGardenersEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<GardenDbContext>();
-    dbContext.Database.Migrate();
+    try
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<GardenDbContext>();
+        dbContext.Database.Migrate();
+        Console.WriteLine("Database migration completed.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("Database migration failed:");
+        Console.WriteLine(ex.Message);
+        throw;
+    }
 }
 
 app.Run();

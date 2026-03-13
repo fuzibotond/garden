@@ -5,4 +5,6 @@ metadata:
 data:
   Jwt__Issuer: Garden.Api
   Jwt__Audience: Garden.App
-  ConnectionStrings__GardenDb: "Server=garden-sqlserver,1433;Database=GardenDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;"
+  Db__Server: garden-sqlserver,1433
+  Db__Name: GardenDb
+  Db__User: sa
