@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Garden.Modules.Identity\Garden.Modules.Identity.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\UpdateMyProfile\" />
+  </ItemGroup>
+
 </Project>

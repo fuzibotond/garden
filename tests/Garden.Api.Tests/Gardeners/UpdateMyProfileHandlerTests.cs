@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Xunit;
 
 using Garden.BuildingBlocks.Infrastructure.Persistence;
-using Garden.Modules.Gardeners.Features.UpdateMyProfile;
+using Garden.Modules.Identity.Features.Profile;
 using Garden.Api.Tests.TestHelpers;
 
 namespace Garden.Api.Tests.Gardeners;

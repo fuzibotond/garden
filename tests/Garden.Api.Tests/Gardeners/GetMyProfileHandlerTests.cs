@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 using Garden.BuildingBlocks.Infrastructure.Persistence;
-using Garden.Modules.Gardeners.Features.GetMyProfile;
+using Garden.Modules.Identity.Features.Profile;
 using Garden.Api.Tests.TestHelpers;
 
 namespace Garden.Api.Tests.Gardeners;

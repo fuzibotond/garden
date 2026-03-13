@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Garden.Modules.Identity.Features.Auth;
+using Microsoft.AspNetCore.Routing;
 
 namespace Garden.Modules.Identity;
 
@@ -24,6 +26,19 @@ public static class ModuleExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+        // Password hasher for clients
+        services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<Garden.BuildingBlocks.Infrastructure.Persistence.ClientRecord>, Microsoft.AspNetCore.Identity.PasswordHasher<Garden.BuildingBlocks.Infrastructure.Persistence.ClientRecord>>();
+
+        // Shared auth handlers and services
+        services.AddScoped<LoginHandler>();
+        services.AddScoped<RegisterGardenerHandler>();
+        services.AddScoped<CreateClientHandler>();
+        services.AddScoped<Features.Profile.GetMyProfileHandler>();
+        services.AddScoped<Features.Profile.DeleteGardenerHandler>();
+        services.AddScoped<Features.Profile.UpdateMyProfileHandler>();
+        services.AddScoped<Features.Auth.LogoutHandler>();
+        services.AddScoped<Services.IAuthService, Services.AuthService>();
+
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -44,5 +59,17 @@ public static class ModuleExtensions
         services.AddAuthorization();
 
         return services;
+    }
+
+    public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
+    {
+        AuthLoginEndpoint.Map(app);
+        RegisterGardenerEndpoint.Map(app);
+        CreateClientEndpoint.Map(app);
+        Features.Profile.GetMyProfileEndpoint.Map(app);
+        Features.Profile.UpdateMyProfileEndpoint.Map(app);
+        Features.Profile.DeleteGardenerEndpoint.Map(app);
+        Features.Auth.LogoutEndpoint.Map(app);
+        return app;
     }
 }

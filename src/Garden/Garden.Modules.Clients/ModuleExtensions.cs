@@ -10,6 +10,7 @@ namespace Garden.Modules.Clients
     {
         public static IServiceCollection AddClientsModule(this IServiceCollection services)
         {
+            services.AddScoped<Services.IClientService, Services.ClientService>();
             return services;
         }
     }

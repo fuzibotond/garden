@@ -106,7 +106,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapGardenersEndpoints();
+app.MapIdentityEndpoints();
+app.MapGardenersEndpoints(); 
 
 
 using (var scope = app.Services.CreateScope())
@@ -116,6 +117,25 @@ using (var scope = app.Services.CreateScope())
         var dbContext = scope.ServiceProvider.GetRequiredService<GardenDbContext>();
         dbContext.Database.Migrate();
         Console.WriteLine("Database migration completed.");
+
+        var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<GardenerRecord>>();
+        const string adminEmail = "admin@admin.com";
+        const string adminPassword = "P@ssw0rd!"; // change to a strong password
+        if (!dbContext.Gardeners.Any(g => g.Email == adminEmail))
+        {
+            var admin = new GardenerRecord
+            {
+                Id = Guid.NewGuid(),
+                Email = adminEmail,
+                CompanyName = "Administrator",
+                CreatedAtUtc = DateTime.UtcNow,
+                LastLogoutUtc = null
+            };
+            admin.PasswordHash = passwordHasher.HashPassword(admin, adminPassword);
+            dbContext.Gardeners.Add(admin);
+            dbContext.SaveChanges();
+            Console.WriteLine($"Seeded admin user: {adminEmail}");
+        }
     }
     catch (Exception ex)
     {

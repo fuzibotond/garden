@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 using Garden.BuildingBlocks.Infrastructure.Persistence;
-using Garden.Modules.Gardeners.Features.RegisterGardener;
+using Garden.Modules.Gardeners.Services;
 
 namespace Garden.Api.Tests.Gardeners;
 
@@ -26,17 +26,15 @@ public class RegisterGardenerHandlerTests
     {
         var context = CreateContext(nameof(HandleAsync_Should_Create_Gardener));
         var passwordHasher = new PasswordHasher<GardenerRecord>();
-        var handler = new RegisterGardenerHandler(context, passwordHasher);
+        var handler = new GardenerRegistrationService(context, passwordHasher);
 
-        var request = new RegisterGardenerRequest("test@example.com", "P@ssw0rd", "Acme Co");
+        var gardener = await handler.RegisterAsync("test@example.com", "P@ssw0rd", "Acme Co");
 
-        var result = await handler.HandleAsync(request);
+        gardener.Id.Should().NotBeEmpty();
+        gardener.Email.Should().Be("test@example.com");
+        gardener.CompanyName.Should().Be("Acme Co");
 
-        result.GardenerId.Should().NotBeEmpty();
-        result.Email.Should().Be("test@example.com");
-        result.CompanyName.Should().Be("Acme Co");
-
-        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == result.GardenerId);
+        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == gardener.Id);
         stored.Should().NotBeNull();
     }
 
@@ -45,15 +43,13 @@ public class RegisterGardenerHandlerTests
     {
         var context = CreateContext(nameof(HandleAsync_Should_Lowercase_Email));
         var passwordHasher = new PasswordHasher<GardenerRecord>();
-        var handler = new RegisterGardenerHandler(context, passwordHasher);
+        var handler = new GardenerRegistrationService(context, passwordHasher);
 
-        var request = new RegisterGardenerRequest("TeSt@ExAMPLE.Com", "P@ssw0rd", "Acme");
+        var gardener = await handler.RegisterAsync("TeSt@ExAMPLE.Com", "P@ssw0rd", "Acme");
 
-        var result = await handler.HandleAsync(request);
+        gardener.Email.Should().Be("test@example.com");
 
-        result.Email.Should().Be("test@example.com");
-
-        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == result.GardenerId);
+        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == gardener.Id);
         stored!.Email.Should().Be("test@example.com");
     }
 
@@ -62,13 +58,11 @@ public class RegisterGardenerHandlerTests
     {
         var context = CreateContext(nameof(HandleAsync_Should_Hash_Password));
         var passwordHasher = new PasswordHasher<GardenerRecord>();
-        var handler = new RegisterGardenerHandler(context, passwordHasher);
+        var handler = new GardenerRegistrationService(context, passwordHasher);
 
-        var request = new RegisterGardenerRequest("user@example.com", "MySecret123", "Acme");
+        var gardener = await handler.RegisterAsync("user@example.com", "MySecret123", "Acme");
 
-        var result = await handler.HandleAsync(request);
-
-        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == result.GardenerId);
+        var stored = await context.Gardeners.FirstOrDefaultAsync(x => x.Id == gardener.Id);
         stored.Should().NotBeNull();
         stored!.PasswordHash.Should().NotBeNullOrWhiteSpace();
 
@@ -94,11 +88,9 @@ public class RegisterGardenerHandlerTests
         context.Gardeners.Add(existing);
         await context.SaveChangesAsync();
 
-        var handler = new RegisterGardenerHandler(context, passwordHasher);
-
-        var request = new RegisterGardenerRequest("Dup@Example.com", "P@ss", "Co");
+        var handler = new GardenerRegistrationService(context, passwordHasher);
 
         await Assert.ThrowsAsync<InvalidOperationException>(async () =>
-            await handler.HandleAsync(request));
+            await handler.RegisterAsync("Dup@Example.com", "P@ss", "Co"));
     }
 }
