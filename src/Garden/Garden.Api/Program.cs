@@ -80,7 +80,9 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddDbContext<GardenDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("GardenDb")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("GardenDb"),
+        sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<IPasswordHasher<GardenerRecord>, PasswordHasher<GardenerRecord>>();
 

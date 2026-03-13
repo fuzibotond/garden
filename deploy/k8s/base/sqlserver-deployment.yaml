@@ -25,3 +25,10 @@ spec:
                 secretKeyRef:
                   name: garden-secrets
                   key: MSSQL_SA_PASSWORD
+          volumeMounts:
+            - name: sql-data
+              mountPath: /var/opt/mssql
+      volumes:
+        - name: sql-data
+          persistentVolumeClaim:
+            claimName: sqlserver-pvc
