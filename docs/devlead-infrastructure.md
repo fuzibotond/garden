@@ -1,200 +1,163 @@
-# 5. Dev Lead Infrastructure Guide
-
-Create:
-
-```
-docs/devlead-infrastructure.md
-```
-
-Content:
-
-```
 # Infrastructure Overview
-```
 
----
+Garden uses a CI/CD pipeline with Kubernetes.
 
-## Architecture
+Architecture:
 
-```
 GitHub
-   │
-   ├─ develop → CI pipeline
-   │
-   └─ main → QA deployment
-            │
-            ▼
-      Self-hosted runner
-            │
-            ▼
-        Kubernetes
-          ├─ garden-api
-          └─ sqlserver
-```
-
----
-
-## CI Pipeline
-
-Triggered on:
-
-```
-develop
-pull requests
-```
-
-Steps:
-
-```
-restore
-build
-test
-docker build
-```
-
----
-
-## CD Pipeline
-
-Triggered on:
-
-```
-main
-```
-
-Deployment flow:
-
-```
-GitHub Action
-↓
+│
+├─ develop → CI pipeline
+│
+└─ main → QA deployment
+      │
+      ▼
 Self-hosted runner
-↓
-kubectl apply
-↓
-rollout restart
-```
+      │
+      ▼
+Docker build
+      │
+      ▼
+Kubernetes deployment
 
 ---
 
-## Kubernetes resources
+# Kubernetes Architecture
 
 Namespace:
 
-```
 garden-qa
-```
 
 Resources:
 
-```
 deployment
 service
 secret
 configmap
-```
+persistent volume claim
+
+Pods:
+
+garden-api
+garden-sqlserver
 
 ---
 
-## Recreating QA environment
+# CI Pipeline
 
-Install:
+Triggered on:
 
-```
+develop
+pull requests
+
+Steps:
+
+restore
+build
+test
+docker build
+
+CI validates code but does not deploy.
+
+---
+
+# CD Pipeline
+
+Triggered on:
+
+main
+
+Deployment flow:
+
+GitHub Action
+↓
+Build Docker image
+↓
+Create/update Kubernetes secrets
+↓
+kubectl apply -k deploy/k8s/overlays/qa
+↓
+rollout restart deployment
+
+---
+
+# Secret Management
+
+Secrets are **never stored in Git**.
+
+Secrets exist in three places:
+
+Local development
+
+.env.local
+
+CI/CD
+
+GitHub Actions Secrets
+
+Runtime
+
+Kubernetes Secrets
+
+---
+
+# GitHub Secrets
+
+Repository → Settings → Secrets → Actions
+
+Example secrets:
+
+QA_JWT_KEY
+QA_SQL_CONNECTION
+QA_SQL_PASSWORD
+
+These are injected during deployment.
+
+---
+
+# Kubernetes Secrets
+
+Secret created during deployment:
+
+garden-secrets
+
+Example keys:
+
+Jwt__Key
+ConnectionStrings__GardenDb
+MSSQL_SA_PASSWORD
+
+The API reads secrets using environment variables.
+
+---
+
+# Storage
+
+SQL Server uses persistent storage.
+
+PersistentVolumeClaim:
+
+sqlserver-pvc
+
+Data path:
+
+/var/opt/mssql
+
+This prevents database data loss when pods restart.
+
+---
+
+# Recreating QA Environment
+
+Requirements:
+
 Docker Desktop
 kubectl
-```
 
-Deploy:
+Deploy QA:
 
-```
 kubectl apply -k deploy/k8s/overlays/qa
-```
 
 Verify:
 
-```
 kubectl get pods -n garden-qa
-```
-
----
-
-# 6. Security Documentation
-
-Create:
-
-```
-docs/security-secrets.md
-```
-
-Content:
-
-```
-# Secret Management
-```
-
-Secrets must never be stored in Git.
-
-Secrets are stored in:
-
-```
-.env.local
-GitHub Secrets
-Kubernetes Secrets
-```
-
----
-
-## GitHub Secrets
-
-Location:
-
-```
-Repository → Settings → Secrets → Actions
-```
-
-Examples:
-
-```
-JWT_KEY
-SQL_PASSWORD
-```
-
----
-
-## Kubernetes Secrets
-
-Create secret:
-
-```
-kubectl create secret generic garden-secrets \
--n garden-qa \
---from-literal=Jwt__Key=<value> \
---from-literal=Sql__SaPassword=<value>
-```
-
----
-
-# 7. Final Documentation Structure
-
-Your repo should contain:
-
-```
-docs/
-│
-├─ developer-setup.md
-├─ qa-testing-guide.md
-├─ devlead-infrastructure.md
-└─ security-secrets.md
-```
-
-Plus:
-
-```
-.env.template
-deploy/k8s/secret.template.yaml
-```
-
----
-
-
-
+kubectl get pvc -n garden-qa

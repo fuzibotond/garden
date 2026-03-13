@@ -1,82 +1,108 @@
-# 4. QA Testing Guide
-
-Create:
-
-```
-docs/qa-testing-guide.md
-```
-
-Content:
-
-```
 # QA Environment Guide
-```
 
-QA environment runs inside Kubernetes.
+The QA environment runs inside Kubernetes.
 
-Branch:
+Deployment branch:
 
-```
 main
-```
 
 ---
 
-## Access QA API
+# Access QA API
 
 Start port-forward:
 
-```
-kubectl port-forward service/garden-api 81:80 -n garden-qa
-```
+kubectl port-forward service/garden-api 8080:8080 -n garden-qa
 
 Open:
 
-```
-http://localhost:81/swagger
-```
+http://localhost:8080/swagger
 
 ---
 
-## Health check
+# Health Check
 
-```
 GET /health
-```
+
+Expected response:
+
+status: ok
+
+---
+
+# Authentication Tests
+
+Test the full authentication flow.
+
+1 Register gardener
+
+POST /gardeners/register
+
+2 Login
+
+POST /gardeners/login
 
 Expected:
 
-```
-status: ok
-```
+JWT token returned
 
----
+3 Access protected endpoint
 
-## Authentication tests
+Add header:
 
-Test flow:
+Authorization: Bearer <token>
 
-1 Register gardener
-2 Login
-3 Access profile
-4 Update profile
+4 Refresh token
+
+POST /auth/refresh
+
 5 Logout
 
+POST /auth/logout
+
 ---
 
-## Viewing logs
+# Database Verification
 
-API logs:
+Check database pod:
 
-```
-kubectl logs -l app=garden-api -n garden-qa
-```
+kubectl get pods -n garden-qa
 
-Database logs:
+Check SQL logs:
 
-```
 kubectl logs -l app=garden-sqlserver -n garden-qa
-```
 
 ---
 
+# API Logs
+
+View API logs:
+
+kubectl logs -l app=garden-api -n garden-qa
+
+Look for:
+
+Database migration completed
+
+JWT key loaded: True
+Connection string loaded: True
+
+---
+
+# Troubleshooting
+
+Login fails with error:
+
+IDX10720
+
+Cause:
+
+JWT key shorter than 32 characters.
+
+Fix:
+
+Update GitHub secret:
+
+QA_JWT_KEY
+
+Redeploy QA.

@@ -2,127 +2,116 @@
 
 This guide explains how developers run the Garden platform locally.
 
-The development environment is isolated from QA.
+The development environment is completely isolated from QA.
 
 DEV API: http://localhost:80  
-QA API: http://localhost:81
+QA API: http://localhost:8080 (via port-forward)
 
-DEV uses database: GardenDevDb
-QA uses database: GardenQaDb
+DEV database: Docker SQL Server
 
 ---
 
-## Step 1 Install prerequisites
+# 1. Install prerequisites
 
 Install:
 
-* Git
-* .NET SDK 10
-* Docker Desktop
-* kubectl
-* Visual Studio or VS Code
+- Git
+- .NET SDK 10
+- Docker Desktop
+- kubectl
+- Visual Studio or VS Code
 
-Verify:
+Verify installation:
 
-```
-git --version
-dotnet --version
-docker version
+git --version  
+dotnet --version  
+docker version  
 kubectl version
-```
 
 ---
 
-## Step 2 Clone repository
+# 2. Clone repository
 
-```
 git clone <repo>
 cd garden
 git checkout develop
-```
 
 Explanation:
 
 Developers work on `develop`.
+
 `main` is reserved for QA deployments.
 
 ---
 
-## Step 3 Setup environment variables
+# 3. Configure local secrets
 
-```
+Copy the template:
+
 cp .env.template .env.local
-```
 
 Edit `.env.local`.
 
-These values are **never committed**.
+Example:
+
+Jwt__Key=dev-super-long-secret-key-32-characters-minimum
+ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True
+
+Important:
+
+- `.env.local` **must never be committed**
+- Secrets are loaded using **DotNetEnv**
 
 ---
 
-## Step 4 Start local SQL Server
+# 4. Start local SQL Server
 
-```
-docker run \
--p 1433:1433 \
--e ACCEPT_EULA=Y \
--e MSSQL_SA_PASSWORD=<password> \
--d mcr.microsoft.com/mssql/server:2022-latest
-```
+docker compose up -d
 
-Docker is used so developers don't need SQL Server installed.
+This starts SQL Server in Docker.
+
+Database port:
+
+1433
 
 ---
 
-## Step 5 Run migrations
+# 5. Run the API
 
-```
-dotnet ef database update
-```
-
-Creates the development schema.
-
----
-
-## Step 6 Run API
-
-```
 dotnet run --urls=http://localhost:80
-```
 
-Open:
+Open Swagger:
 
-```
 http://localhost:80/swagger
-```
+
+The API will automatically run EF Core migrations on startup.
 
 ---
 
-## Step 7 Development workflow
+# 6. Development workflow
 
-Create feature branch:
+Create a feature branch:
 
-```
 git checkout develop
 git pull
 git checkout -b feature/my-feature
-```
 
 Push:
 
-```
 git push origin feature/my-feature
-```
 
-Create PR → `develop`.
+Create Pull Request → `develop`
+
+CI pipeline will run automatically.
 
 ---
 
-# 4. QA Testing Guide
+# 7. Important development notes
 
-Create:
+JWT keys must be **at least 32 characters**.
 
-```
-docs/qa-testing-guide.md
-```
----
+Short keys will break token generation.
+
+Example error:
+
+IDX10720: key size must be greater than 256 bits
