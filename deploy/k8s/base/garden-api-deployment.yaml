@@ -1,34 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: garden-sqlserver
+  name: garden-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: garden-sqlserver
+      app: garden-api
   template:
     metadata:
       labels:
-        app: garden-sqlserver
+        app: garden-api
     spec:
       containers:
-        - name: garden-sqlserver
-          image: mcr.microsoft.com/mssql/server:2022-latest
+        - name: garden-api
+          image: garden-api:dev
+          imagePullPolicy: Never
           ports:
-            - containerPort: 1433
-          env:
-            - name: ACCEPT_EULA
-              value: "Y"
-            - name: MSSQL_SA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: garden-secrets
-                  key: MSSQL_SA_PASSWORD
-          volumeMounts:
-            - name: sql-data
-              mountPath: /var/opt/mssql
-      volumes:
-        - name: sql-data
-          persistentVolumeClaim:
-            claimName: sqlserver-pvc
+            - containerPort: 8080

@@ -4,6 +4,7 @@ resources:
   - ../../base
   - namespace.yaml
   - configmap.yaml
+  - sqlserver-pvc.yaml
 
 patches:
   - path: patch-api-env.yaml
