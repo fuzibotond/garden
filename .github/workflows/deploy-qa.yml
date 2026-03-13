@@ -22,6 +22,15 @@ jobs:
         run: docker build -f src/Garden/Garden.Api/Dockerfile -t garden-api:qa .
         shell: cmd
 
+      - name: Create or update QA secret
+        run: >
+          kubectl -n garden-qa create secret generic garden-secrets ^
+          --from-literal=Jwt__Key="${{ secrets.QA_JWT_KEY }}" ^
+          --from-literal=MSSQL_SA_PASSWORD="${{ secrets.QA_SQL_PASSWORD }}" ^
+          --from-literal=ConnectionStrings__GardenDb="Server=garden-sqlserver,1433;Database=GardenDb;User Id=sa;Password=${{ secrets.QA_SQL_PASSWORD }};TrustServerCertificate=True;" ^
+          --dry-run=client -o yaml | kubectl apply -f -
+        shell: cmd
+
       - name: Apply QA manifests
         run: kubectl apply -k deploy/k8s/overlays/qa
         shell: cmd

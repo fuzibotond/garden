@@ -5,6 +5,3 @@ metadata:
 data:
   Jwt__Issuer: Garden.Api
   Jwt__Audience: Garden.App
-  Db__Server: garden-sqlserver,1433
-  Db__Name: GardenDb
-  Db__User: sa

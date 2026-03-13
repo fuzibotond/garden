@@ -10,3 +10,4 @@ secrets/
 **/appsettings.Development.local.json
 secret.yaml
 *.secret.yaml
+.env.local
