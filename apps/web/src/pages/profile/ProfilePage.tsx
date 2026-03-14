@@ -21,8 +21,16 @@ export default function ProfilePage() {
       try {
         const data = await getMyProfile(token)
         setProfile(data)
-        setCompanyName(data.companyName ?? "")
-        setName(data.name ?? "")
+        console.log(data)
+        const isPureClient = hasRole(claims, "Client") && !hasRole(claims, "Admin") && !hasRole(claims, "Gardener")
+        if (isPureClient) {
+          // For clients the backend uses Name, not CompanyName
+          setName(data.name ?? "")
+        } else {
+          setCompanyName(data.companyName ?? "")
+          setName(data.name ?? "")
+          
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load profile")
       } finally {
@@ -41,9 +49,11 @@ export default function ProfilePage() {
 
     try {
       const body: { companyName?: string; name?: string } = {}
+      const isPureClient = hasRole(claims, "Client") && !hasRole(claims, "Admin") && !hasRole(claims, "Gardener")
 
-      if (hasRole(claims, "Client") && !hasRole(claims, "Admin") && !hasRole(claims, "Gardener")) {
-        body.companyName = companyName
+      if (isPureClient) {
+        // Client entity maps only Name, so persist via Name
+        body.name = name || undefined
       } else {
         body.companyName = companyName || undefined
         body.name = name || undefined
@@ -105,7 +115,7 @@ export default function ProfilePage() {
                 <div style={{ fontSize: 14 }}>{claims?.roles.join(", ")}</div>
               </div>
 
-              {!hasRole(claims, "Client") || hasRole(claims, "Admin") || hasRole(claims, "Gardener") ? (
+              {hasRole(claims, "Client") || hasRole(claims, "Admin") || hasRole(claims, "Gardener") ? (
                 <div>
                   <label style={{ fontSize: 12, opacity: 0.8 }}>Name</label>
                   <input
@@ -125,25 +135,26 @@ export default function ProfilePage() {
                   />
                 </div>
               ) : null}
-
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Company name</label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(event) => setCompanyName(event.target.value)}
-                  style={{
-                    marginTop: 4,
-                    width: "100%",
-                    borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.18)",
-                    padding: "8px 12px",
-                    backgroundColor: "rgba(3,15,8,0.9)",
-                    color: "white",
-                    outline: "none",
-                  }}
-                />
-              </div>
+              {!hasRole(claims, "Client") || hasRole(claims, "Admin") || hasRole(claims, "Gardener") ? (
+                <div>
+                  <label style={{ fontSize: 12, opacity: 0.8 }}>Company Name</label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(event) => setCompanyName(event.target.value)}
+                    style={{
+                      marginTop: 4,
+                      width: "100%",
+                      borderRadius: 999,
+                      border: "1px solid rgba(255,255,255,0.18)",
+                      padding: "8px 12px",
+                      backgroundColor: "rgba(3,15,8,0.9)",
+                      color: "white",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div

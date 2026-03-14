@@ -22,31 +22,61 @@ public class UpdateMyProfileHandler
         if (!_currentUser.IsAuthenticated || _currentUser.UserId is null)
             throw new InvalidOperationException("User is not authenticated.");
 
-        if (string.IsNullOrWhiteSpace(request.CompanyName))
-            throw new ArgumentException("Company name is required.");
-
-        var gardener = await _dbContext.Gardeners
+        if (_currentUser.Roles.Contains("Client"))
+        {
+            var clients = await _dbContext.Clients
             .FirstOrDefaultAsync(x => x.Id == _currentUser.UserId.Value, cancellationToken);
 
-        if (gardener is null)
-            throw new InvalidOperationException("Gardener profile was not found.");
+            if (clients is null)
+                throw new InvalidOperationException("Client profile was not found.");
 
-        // If the user logged out after the token was issued, reject the token
-        if (gardener.LastLogoutUtc is not null && _currentUser.IssuedAtUtc is not null)
-        {
-            if (_currentUser.IssuedAtUtc <= gardener.LastLogoutUtc.Value)
-                throw new InvalidOperationException("User is not authenticated.");
+            // If the user logged out after the token was issued, reject the token
+            if (clients.LastLogoutUtc is not null && _currentUser.IssuedAtUtc is not null)
+            {
+                if (_currentUser.IssuedAtUtc <= clients.LastLogoutUtc.Value)
+                    throw new InvalidOperationException("User is not authenticated.");
+            }
+
+            clients.Name = request.Name.Trim();
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return new UpdateMyProfileResponse(
+                clients.Id,
+                clients.Email,
+                "",
+                clients.Name,
+                clients.CreatedAtUtc
+            );
         }
+        else
+        {
+            var gardener = await _dbContext.Gardeners
+            .FirstOrDefaultAsync(x => x.Id == _currentUser.UserId.Value, cancellationToken);
 
-        gardener.CompanyName = request.CompanyName.Trim();
+            if (gardener is null)
+                throw new InvalidOperationException("Gardener profile was not found.");
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+            // If the user logged out after the token was issued, reject the token
+            if (gardener.LastLogoutUtc is not null && _currentUser.IssuedAtUtc is not null)
+            {
+                if (_currentUser.IssuedAtUtc <= gardener.LastLogoutUtc.Value)
+                    throw new InvalidOperationException("User is not authenticated.");
+            }
 
-        return new UpdateMyProfileResponse(
-            gardener.Id,
-            gardener.Email,
-            gardener.CompanyName,
-            gardener.CreatedAtUtc
-        );
+            gardener.CompanyName = request.CompanyName.Trim();
+            gardener.Name = request.Name.Trim();
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return new UpdateMyProfileResponse(
+                gardener.Id,
+                gardener.Email,
+                gardener.CompanyName,
+                gardener.Name,
+                gardener.CreatedAtUtc
+            );
+        }
+        
     }
 }

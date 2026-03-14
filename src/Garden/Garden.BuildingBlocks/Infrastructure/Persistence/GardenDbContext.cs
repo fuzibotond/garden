@@ -24,6 +24,10 @@ public class GardenDbContext : DbContext
                 .HasMaxLength(256)
                 .IsRequired();
 
+            entity.Property(x => x.Name)
+                .HasMaxLength(200)
+                .IsRequired();
+
             entity.Property(x => x.CompanyName)
                 .HasMaxLength(200)
                 .IsRequired();
@@ -77,6 +81,9 @@ public class GardenDbContext : DbContext
             entity.Property(x => x.CreatedAtUtc)
                 .IsRequired();
 
+            entity.Property(x => x.LastLogoutUtc)
+                .IsRequired(false);
+
             entity.HasIndex(x => x.Email).IsUnique();
         });
     }
@@ -87,6 +94,7 @@ public class GardenerRecord
     public Guid Id { get; set; }
     public string Email { get; set; } = default!;
     public string CompanyName { get; set; } = default!;
+    public string Name { get; set; } = default!;
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastLogoutUtc { get; set; }
@@ -99,4 +107,5 @@ public class ClientRecord
     public string Name { get; set; } = default!;
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
+    public DateTime? LastLogoutUtc { get; set; }
 }

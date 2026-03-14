@@ -4,5 +4,6 @@ public record UpdateMyProfileResponse(
     Guid GardenerId,
     string Email,
     string CompanyName,
+    string Name,
     DateTime CreatedAtUtc
 );

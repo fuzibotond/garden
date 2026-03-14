@@ -38,6 +38,7 @@ public class GetMyProfileHandler
             return new GetMyProfileResponse(
                 gardener.Id,
                 gardener.Email,
+                gardener.Name,
                 gardener.CompanyName,
                 gardener.CreatedAtUtc
             );
@@ -53,7 +54,8 @@ public class GetMyProfileHandler
             return new GetMyProfileResponse(
                 client.Id,
                 client.Email,
-                client.Name,          // map Name -> display field expected by response
+                client.Name,
+                "",          // map Name -> display field expected by response
                 client.CreatedAtUtc
             );
         }
