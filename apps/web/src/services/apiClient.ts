@@ -113,14 +113,14 @@ export function updateMyProfile(body: UpdateProfileRequest, token: string) {
 }
 
 export function deleteMyProfile(token: string) {
-  return apiRequest<void>("/gardeners/delete", {
+  return apiRequest<void>("/auth/delete", {
     method: "DELETE",
     token,
   })
 }
 
 export function logout(token: string) {
-  return apiRequest<void>("/gardeners/logout", {
+  return apiRequest<void>("/auth/logout", {
     method: "POST",
     token,
   })

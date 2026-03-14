@@ -1,6 +1,7 @@
 import { type FormEventHandler, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { login } from "../../services/apiClient"
+import { hasRole, parseClaimsFromToken } from "../../lib/auth"
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -17,7 +18,15 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password })
       localStorage.setItem("accessToken", result.accessToken)
-      navigate("/admin", { replace: true })
+      const claims = parseClaimsFromToken(result.accessToken)
+
+      if (hasRole(claims, "Admin")) {
+        navigate("/admin", { replace: true })
+      } else if (hasRole(claims, "Gardener")) {
+        navigate("/admin/clients", { replace: true })
+      } else {
+        navigate("/profile", { replace: true })
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
     } finally {
