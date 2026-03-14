@@ -2,8 +2,7 @@ import AdminLayout from "../../components/layout/AdminLayout"
 
 export default function TasksPage() {
   return (
-    <AdminLayout>
-      <h1>Tasks</h1>
+    <AdminLayout title="Tasks">
       <p>Manage tasks here.</p>
     </AdminLayout>
   )

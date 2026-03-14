@@ -1,102 +1,60 @@
 import type { ReactNode } from "react"
 import { NavLink } from "react-router-dom"
 
-type Props = {
+type AdminLayoutProps = {
+  title: string
   children: ReactNode
 }
 
-const navItemStyle = {
-  display: "block",
-  padding: "10px 12px",
-  borderRadius: "8px",
-  textDecoration: "none",
-  color: "#1f2937",
-  marginBottom: "6px",
-}
-
-export default function AdminLayout({ children }: Props) {
+export default function AdminLayout({ title, children }: AdminLayoutProps) {
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#f8fafc" }}>
-      <aside
-        style={{
-          width: "240px",
-          padding: "20px",
-          borderRight: "1px solid #e5e7eb",
-          background: "#ffffff",
-        }}
-      >
-        <h2 style={{ marginTop: 0 }}>Garden Admin</h2>
+    <div className="admin-shell">
+      <aside className="admin-sidebar glass-card">
+        <div>
+          <div className="admin-sidebar__brand">Garden Admin</div>
+          <p style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
+            Manage plants, people, and jobs.
+          </p>
+        </div>
 
         <nav>
-          <NavLink
-            to="/admin"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Dashboard
           </NavLink>
-
-          <NavLink
-            to="/admin/users"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin/users" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Users
           </NavLink>
-
-          <NavLink
-            to="/admin/gardeners"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin/gardeners" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Gardeners
           </NavLink>
-
-          <NavLink
-            to="/admin/clients"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin/clients" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Clients
           </NavLink>
-
-          <NavLink
-            to="/admin/jobs"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin/jobs" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Jobs
           </NavLink>
-
-          <NavLink
-            to="/admin/tasks"
-            style={({ isActive }) => ({
-              ...navItemStyle,
-              background: isActive ? "#e0f2fe" : "transparent",
-              fontWeight: isActive ? 700 : 400,
-            })}
-          >
+          <NavLink to="/admin/tasks" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
             Tasks
           </NavLink>
         </nav>
       </aside>
 
-      <main style={{ flex: 1, padding: "24px" }}>{children}</main>
+      <div className="admin-main">
+        <header className="admin-header">
+          <div>
+            <div className="pill">
+              <span className="pill-dot" />
+              <span>All Plants overview</span>
+            </div>
+            <h1 className="admin-header__title">{title}</h1>
+            <p className="admin-header__subtitle">
+              High-level view of your garden marketplace.
+            </p>
+          </div>
+        </header>
+
+        <main>{children}</main>
+      </div>
     </div>
   )
 }
