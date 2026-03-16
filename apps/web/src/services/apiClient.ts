@@ -150,6 +150,10 @@ export type PagedResponse<T> = {
   pageSize: number
 }
 
+export type TotalResponse = {
+  numItems: number
+}
+
 // --- Admin: Gardeners ---
 export type AdminGardenerDto = {
   gardenerId: string
@@ -176,6 +180,13 @@ export function getAdminGardeners(token: string, page = 1, pageSize = 20) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   return apiRequest<PagedResponse<AdminGardenerDto>>(
     `/api/admin/gardeners?${params}`,
+    { method: "GET", token },
+  )
+}
+
+export function getNumberOfAdminGardeners(token: string) {
+  return apiRequest<TotalResponse>(
+    `/api/admin/gardeners/total`,
     { method: "GET", token },
   )
 }
@@ -247,6 +258,13 @@ export function getAdminClients(token: string, page = 1, pageSize = 20) {
   )
 }
 
+export function getNumberOfAdminClients(token: string) {
+  return apiRequest<TotalResponse>(
+    `/api/admin/clients/total`,
+    { method: "GET", token },
+  )
+}
+
 export function getAdminClientById(token: string, clientId: string) {
   return apiRequest<AdminClientDto>(`/api/admin/clients/${clientId}`, {
     method: "GET",
@@ -299,6 +317,14 @@ export function getGardenerClients(token: string, page = 1, pageSize = 20) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   return apiRequest<PagedResponse<GardenerClientDto>>(
     `/api/gardener/clients?${params}`,
+    { method: "GET", token },
+  )
+}
+
+export function getNumberOfGardenerClients(token: string) {
+
+  return apiRequest<TotalResponse>(
+    `/api/gardener/clients/total`,
     { method: "GET", token },
   )
 }

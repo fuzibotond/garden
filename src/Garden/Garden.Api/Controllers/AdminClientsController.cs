@@ -49,6 +49,15 @@ public class AdminClientsController : ControllerBase
         return Ok(new PagedResult<AdminClientDto>(items, total, page, pageSize));
     }
 
+    [HttpGet("total")]
+    public async Task<IActionResult> GetNumberTotalClients()
+    {
+        var total = await _dbContext.Clients.CountAsync();
+
+
+        return Ok(new TotalNumberResponse(total));
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {

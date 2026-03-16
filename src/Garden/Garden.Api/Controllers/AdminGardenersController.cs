@@ -52,6 +52,15 @@ public class AdminGardenersController : ControllerBase
         return Ok(new PagedResult<AdminGardenerDto>(items, total, page, pageSize));
     }
 
+    [HttpGet("total")]
+    public async Task<IActionResult> GetNumberTotalGardners()
+    {
+        var total = await _dbContext.Gardeners.CountAsync();
+
+        return Ok(new TotalNumberResponse(total));
+    }
+
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
