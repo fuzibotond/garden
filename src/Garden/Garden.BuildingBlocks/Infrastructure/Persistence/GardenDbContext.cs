@@ -26,7 +26,7 @@ public class GardenDbContext : DbContext
 
             entity.Property(x => x.Name)
                 .HasMaxLength(200)
-                .IsRequired();
+                .IsRequired(false);
 
             entity.Property(x => x.CompanyName)
                 .HasMaxLength(200)
@@ -94,7 +94,7 @@ public class GardenerRecord
     public Guid Id { get; set; }
     public string Email { get; set; } = default!;
     public string CompanyName { get; set; } = default!;
-    public string Name { get; set; } = default!;
+    public string? Name { get; set; }
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastLogoutUtc { get; set; }
