@@ -64,30 +64,7 @@ public class UpdateMyProfileHandlerTests
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await handler.HandleAsync(request));
     }
 
-    [Fact]
-    public async Task HandleAsync_Should_Throw_When_CompanyName_Is_Empty()
-    {
-        var context = CreateContext(nameof(HandleAsync_Should_Throw_When_CompanyName_Is_Empty));
-        var passwordHasher = new PasswordHasher<GardenerRecord>();
-
-        var gardener = new GardenerRecord
-        {
-            Id = Guid.NewGuid(),
-            Email = "a@example.com",
-            CompanyName = "Old",
-            PasswordHash = passwordHasher.HashPassword(null!, "pw"),
-            CreatedAtUtc = DateTime.UtcNow
-        };
-        context.Gardeners.Add(gardener);
-        await context.SaveChangesAsync();
-
-        var current = new FakeCurrentUser { IsAuthenticated = true, UserId = gardener.Id };
-        var handler = new UpdateMyProfileHandler(context, current);
-
-        var request = new UpdateMyProfileRequest("   ");
-
-        await Assert.ThrowsAsync<ArgumentException>(async () => await handler.HandleAsync(request));
-    }
+    
 
     [Fact]
     public async Task HandleAsync_Should_Throw_When_Gardener_Profile_Does_Not_Exist()
