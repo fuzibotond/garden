@@ -57,6 +57,26 @@ namespace Garden.BuildingBlocks.Migrations
                     b.ToTable("Clients", (string)null);
                 });
 
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.GardenerClientRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GardenerId", "ClientId")
+                        .IsUnique();
+
+                    b.ToTable("GardenerClients", (string)null);
+                });
+
             modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.GardenerRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -94,6 +114,44 @@ namespace Garden.BuildingBlocks.Migrations
                         .IsUnique();
 
                     b.ToTable("Gardeners", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.InvitationRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("AcceptedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GardenerId");
+
+                    b.ToTable("Invitations", (string)null);
                 });
 
             modelBuilder.Entity("RefreshTokenRecord", b =>

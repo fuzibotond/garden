@@ -13,6 +13,38 @@
   --radius-lg: 18px;
   --blur-strong: 26px;
   --glass-shadow: 0 18px 60px rgba(0, 0, 0, 0.6);
+  
+  /* Glass UI tokens: these must be RGB triplets, not hex values */
+  --glass-cyan: 110 231 183;
+  --glass-violet: 74 222 128;
+  --glass-pink: 163 230 53;
+  --glass-success: 34 197 94;
+  --glass-warning: 245 158 11;
+  --glass-error: 239 68 68;
+  --glass-bg-dark: 7 20 12;
+  --glass-bg-card: 17 40 24;
+  --glass-bg-light: 236 253 245;
+  --glass-text-primary: 247 248 244;
+  --glass-text-secondary: 192 199 184;
+
+  /* Compatibility aliases used by some custom styles */
+  --glass-dark: var(--bg-root);
+  --glass-card: var(--bg-surface);
+
+  /* Glass effect */
+  --glass-blur: var(--blur-strong);
+  --glass-bg-opacity: 0.72;
+  --glass-border-opacity: 0.12;
+  --glass-shadow: var(--glass-shadow);
+  --glass-glow: 0 0 40px rgba(110, 231, 183, 0.28);
+  --glass-glow-violet: 0 0 40px rgba(74, 222, 128, 0.28);
+  --glass-glow-pink: 0 0 40px rgba(163, 230, 53, 0.28);
+  --glass-radius: var(--radius-lg);
+
+  /* Animation (unchanged, but tuned slightly to your UI feel) */
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-slow: 260ms;
 }
 
 *,
@@ -236,4 +268,243 @@ a:hover {
   .admin-main {
     padding: 20px 18px 24px;
   }
+}
+
+/* Glass UI accent override: package utility classes are precompiled with blue values. */
+.bg-glass-cyan,
+.data-\[state\=active\]\:bg-glass-cyan[data-state="active"],
+.data-\[state\=checked\]\:bg-glass-cyan[data-state="checked"] {
+  background-color: rgb(110 231 183 / 1);
+}
+
+.hover\:bg-glass-cyan\/90:hover,
+.data-\[state\=checked\]\:hover\:bg-glass-cyan\/90:hover[data-state="checked"] {
+  background-color: rgb(74 222 128 / 0.9);
+}
+
+.text-glass-cyan {
+  color: rgb(110 231 183 / 1);
+}
+
+.hover\:text-glass-cyan\/80:hover {
+  color: rgb(110 231 183 / 0.8);
+}
+
+.border-glass-cyan\/30 {
+  border-color: rgb(110 231 183 / 0.3);
+}
+
+.border-glass-cyan\/50,
+.focus\:border-glass-cyan\/50:focus,
+.data-\[state\=checked\]\:border-glass-cyan[data-state="checked"] {
+  border-color: rgb(74 222 128 / 0.5);
+}
+
+.hover\:border-glass-cyan:hover {
+  border-color: rgb(74 222 128 / 1);
+}
+
+.focus-visible\:ring-glass-cyan:focus-visible {
+  --tw-ring-color: rgb(74 222 128 / 1);
+}
+
+.shadow-glass-glow,
+.hover\:shadow-glass-glow:hover,
+.focus\:shadow-glass-glow:focus {
+  --tw-shadow: 0 0 40px rgb(110 231 183 / 0.3);
+  --tw-shadow-colored: 0 0 40px var(--tw-shadow-color);
+}
+
+.bg-glass-violet {
+  background-color: rgb(74 222 128 / 1);
+}
+
+.bg-glass-pink {
+  background-color: rgb(163 230 53 / 1);
+}
+
+.from-glass-cyan {
+  --tw-gradient-from: #6ee7b7 var(--tw-gradient-from-position);
+  --tw-gradient-to: rgb(110 231 183 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
+}
+
+.via-glass-violet {
+  --tw-gradient-to: rgb(74 222 128 / 0) var(--tw-gradient-to-position);
+  --tw-gradient-stops: var(--tw-gradient-from), #4ade80 var(--tw-gradient-via-position), var(--tw-gradient-to);
+}
+
+.to-glass-pink {
+  --tw-gradient-to: #a3e635 var(--tw-gradient-to-position);
+}
+
+/* Local Glass UI wrapper styles */
+.glass-ui-card {
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(190, 255, 171, 0.14);
+  background:
+    linear-gradient(150deg, rgba(33, 85, 52, 0.32), rgba(8, 22, 13, 0.82));
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.glass-ui-card--default,
+.glass-ui-card--elevated {
+  border-color: rgba(190, 255, 171, 0.14);
+}
+
+.glass-ui-card--outlined {
+  background: rgba(10, 26, 15, 0.6);
+  border-color: rgba(190, 255, 171, 0.25);
+}
+
+.glass-ui-card--glow,
+.glass-ui-card--glow-violet,
+.glass-ui-card--glow-pink {
+  box-shadow:
+    0 0 0 1px rgba(190, 255, 171, 0.15),
+    0 16px 42px rgba(0, 0, 0, 0.6),
+    0 0 28px rgba(134, 239, 172, 0.22);
+}
+
+.glass-ui-card--p-none { padding: 0; }
+.glass-ui-card--p-sm { padding: 14px; }
+.glass-ui-card--p-md { padding: 18px; }
+.glass-ui-card--p-lg { padding: 24px; }
+.glass-ui-card--p-xl { padding: 28px; }
+
+.glass-ui-btn {
+  border-radius: 999px;
+  font-weight: 600;
+  transition: all 0.16s ease;
+  border: 1px solid transparent;
+  color: #f7f8f4;
+}
+
+.glass-ui-btn:disabled {
+  opacity: 0.62;
+  cursor: default;
+}
+
+.glass-ui-btn--primary {
+  border: none;
+  background: linear-gradient(135deg, #d9ff6a 0%, #9dff4f 40%, #4fe368 100%);
+  color: #071108;
+}
+
+.glass-ui-btn--secondary {
+  border-color: rgba(190, 255, 171, 0.38);
+  background: rgba(7, 25, 14, 0.78);
+}
+
+.glass-ui-btn--ghost {
+  border-color: rgba(190, 255, 171, 0.24);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.glass-ui-btn--danger {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(127, 29, 29, 0.4);
+  color: #fee2e2;
+}
+
+.glass-ui-btn--xs { padding: 4px 10px; font-size: 12px; }
+.glass-ui-btn--sm { padding: 8px 14px; font-size: 13px; }
+.glass-ui-btn--md { padding: 10px 16px; font-size: 14px; }
+.glass-ui-btn--lg { padding: 11px 18px; font-size: 15px; }
+.glass-ui-btn--xl { padding: 12px 20px; font-size: 16px; }
+.glass-ui-btn--full { width: 100%; }
+
+.glass-ui-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.glass-ui-input-wrap--full {
+  width: 100%;
+}
+
+.glass-ui-input__label {
+  font-size: 13px;
+  color: rgba(247, 248, 244, 0.9);
+}
+
+.glass-ui-input {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(190, 255, 171, 0.32);
+  background: rgba(4, 20, 10, 0.86);
+  color: #f7f8f4;
+  outline: none;
+}
+
+.glass-ui-input::placeholder {
+  color: rgba(192, 199, 184, 0.78);
+}
+
+.glass-ui-input:focus {
+  border-color: rgba(134, 239, 172, 0.72);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.16);
+}
+
+.glass-ui-input--sm { padding: 8px 12px; font-size: 13px; }
+.glass-ui-input--md { padding: 10px 14px; font-size: 14px; }
+.glass-ui-input--lg { padding: 11px 16px; font-size: 15px; }
+
+.glass-ui-input--error {
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.glass-ui-input__error {
+  margin: 0;
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.glass-ui-input__help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.glass-ui-switch-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.glass-ui-switch-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.glass-ui-switch {
+  width: 52px;
+  height: 30px;
+  padding: 2px;
+  border-radius: 999px;
+  border: 1px solid rgba(190, 255, 171, 0.35);
+  background: rgba(8, 30, 16, 0.9);
+  transition: background 0.16s ease;
+}
+
+.glass-ui-switch[data-state="checked"] {
+  background: linear-gradient(135deg, #7dd35c, #4fe368);
+}
+
+.glass-ui-switch-thumb {
+  display: block;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: #f8fafc;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+  transform: translateX(0);
+  transition: transform 0.16s ease;
+}
+
+.glass-ui-switch-thumb[data-state="checked"] {
+  transform: translateX(22px);
 }

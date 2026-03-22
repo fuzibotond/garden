@@ -1,5 +1,6 @@
 import AdminLayout from "../../components/layout/AdminLayout"
 import StatCard from "../../components/common/StatCard"
+import { GlassCard } from "../../components/ui/GlassUI"
 import { getAccessToken, getCurrentUser, hasRole } from "../../lib/auth"
 import { useCallback, useEffect, useState } from "react"
 import { getNumberOfAdminClients, getNumberOfAdminGardeners, getNumberOfGardenerClients } from "../../services/apiClient"
@@ -59,6 +60,11 @@ export default function DashboardPage() {
     <AdminLayout title="Dashboard">
       {error && (
         <p style={{ color: "#fecaca", fontSize: 13, marginBottom: 16 }}>{error}</p>
+      )}
+      {loading && (
+        <GlassCard variant="outlined" padding="md" style={{ marginBottom: 16 }}>
+          Loading dashboard metrics...
+        </GlassCard>
       )}
       <div
         style={{

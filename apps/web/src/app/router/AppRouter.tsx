@@ -7,7 +7,9 @@ import JobsPage from "../../pages/jobs/JobsPage"
 import TasksPage from "../../pages/tasks/TasksPage"
 import ClientsPage from "../../pages/clients/ClientsPage"
 import ProfilePage from "../../pages/profile/ProfilePage"
+import AcceptInvitationPage from "../../pages/invitations/AcceptInvitationPage"
 import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
+import ClientSignup from "../../pages/clients/ClientSignup"
 
 type ProtectedRouteProps = {
   allowedRoles?: Role[]
@@ -34,8 +36,10 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/invite/accept" element={<AcceptInvitationPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<ClientSignup />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/profile" element={<ProfilePage />} />

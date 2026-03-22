@@ -1,4 +1,6 @@
+using DotNetEnv;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Clients;
 using Garden.Modules.Gardeners;
 using Garden.Modules.Identity;
@@ -10,7 +12,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using System.Security.Claims;
-using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,7 +34,10 @@ Console.WriteLine($"Jwt key loaded: {builder.Configuration["Jwt:Key"] is not nul
 Console.WriteLine($"Connection string loaded: {builder.Configuration.GetConnectionString("GardenDb") is not null}");
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddApplicationPart(typeof(Garden.Modules.Clients.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Gardeners.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Identity.ModuleExtensions).Assembly);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -43,10 +47,21 @@ builder.Services.AddGardenersModule();
 builder.Services.AddClientsModule();
 builder.Services.AddTasksModule();
 builder.Services.AddSchedulingModule();
-builder.Services.AddNotificationsModule();
+builder.Services.AddNotificationsModule(builder.Configuration);
+
+// Configure event publishing with RabbitMQ
+var rabbitOptions = builder.Configuration
+    .GetSection("RabbitMq")
+    .Get<RabbitMqOptions>() ?? new RabbitMqOptions();
+
+builder.Services.AddSingleton(rabbitOptions);
+builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
+
 
 builder.Services.AddSwaggerGen(options =>
 {
+    // Use full type names for schema Ids to avoid collisions between similarly named types
+    options.CustomSchemaIds(type => type.FullName);
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "Garden API",
@@ -85,12 +100,10 @@ builder.Services.AddDbContext<GardenDbContext>(options =>
         sql => sql.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<IPasswordHasher<GardenerRecord>, PasswordHasher<GardenerRecord>>();
-
+builder.Services.AddScoped<IPasswordHasher<ClientRecord>, PasswordHasher<ClientRecord>>();
+// Register RabbitMQ publisher (RabbitMqOptions instance and publisher already registered above)
 
 var app = builder.Build();
-
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();

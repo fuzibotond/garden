@@ -1,28 +1,24 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
 using Garden.Modules.Clients.Services;
-using Garden.Modules.Identity;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Garden.Api.Dto;
 
-namespace Garden.Api.Controllers;
+namespace Garden.Modules.Clients.Controllers;
 
 [ApiController]
 [Route("api/gardener/clients")]
-[Authorize(Roles = Roles.Gardener)]
-public class GardenerClientsController : ControllerBase
+[Authorize(Roles = "Gardener")]
+public class ClientsController : ControllerBase
 {
     private readonly GardenDbContext _dbContext;
     private readonly IClientService _clientService;
-    private readonly ICurrentUser _currentUser;
 
-    public GardenerClientsController(GardenDbContext dbContext, IClientService clientService, ICurrentUser currentUser)
+    public ClientsController(GardenDbContext dbContext, IClientService clientService)
     {
         _dbContext = dbContext;
         _clientService = clientService;
-        _currentUser = currentUser;
     }
 
     [HttpGet]
@@ -42,14 +38,34 @@ public class GardenerClientsController : ControllerBase
                 ClientId = c.Id,
                 FullName = c.Name,
                 Email = c.Email,
-                CreatedAt = c.CreatedAtUtc
+                CreatedAt = c.CreatedAtUtc,
+                InvitationStatus = _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.Status.ToString())
+                    .FirstOrDefault(),
+                InvitationSentAt = _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.CreatedAtUtc)
+                    .FirstOrDefault(),
+                InvitationAcceptedAt = _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.AcceptedAtUtc)
+                    .FirstOrDefault(),
+                InvitationExpiresAt = _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.ExpiresAtUtc)
+                    .FirstOrDefault()
             })
             .ToListAsync();
 
         return Ok(new PagedResult<GardenerClientDto>(items, total, page, pageSize));
     }
 
-      [HttpGet("total")]
+    [HttpGet("total")]
     public async Task<IActionResult> GetNumberTotalClients()
     {
         var total = await _dbContext.Clients.CountAsync();
@@ -57,19 +73,27 @@ public class GardenerClientsController : ControllerBase
         return Ok(new TotalNumberResponse(total));
     }
 
-
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id)
     {
         var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
         if (client == null) return NotFound();
 
+        var invitation = await _dbContext.Invitations
+            .Where(i => i.Email == client.Email)
+            .OrderByDescending(i => i.CreatedAtUtc)
+            .FirstOrDefaultAsync();
+
         var dto = new GardenerClientDto
         {
             ClientId = client.Id,
             FullName = client.Name,
             Email = client.Email,
-            CreatedAt = client.CreatedAtUtc
+            CreatedAt = client.CreatedAtUtc,
+            InvitationStatus = invitation?.Status.ToString(),
+            InvitationSentAt = invitation?.CreatedAtUtc,
+            InvitationAcceptedAt = invitation?.AcceptedAtUtc,
+            InvitationExpiresAt = invitation?.ExpiresAtUtc
         };
 
         return Ok(dto);
@@ -86,12 +110,21 @@ public class GardenerClientsController : ControllerBase
         {
             var client = await _clientService.CreateClientAsync(request.Email, request.FullName, initialPassword);
 
+            var invitation = await _dbContext.Invitations
+                .Where(i => i.Email == client.Email)
+                .OrderByDescending(i => i.CreatedAtUtc)
+                .FirstOrDefaultAsync();
+
             var dto = new GardenerClientDto
             {
                 ClientId = client.Id,
                 FullName = client.Name,
                 Email = client.Email,
-                CreatedAt = client.CreatedAtUtc
+                CreatedAt = client.CreatedAtUtc,
+                InvitationStatus = invitation?.Status.ToString(),
+                InvitationSentAt = invitation?.CreatedAtUtc,
+                InvitationAcceptedAt = invitation?.AcceptedAtUtc,
+                InvitationExpiresAt = invitation?.ExpiresAtUtc
             };
 
             return CreatedAtAction(nameof(GetById), new { id = dto.ClientId }, dto);
@@ -153,6 +186,10 @@ public class GardenerClientsController : ControllerBase
 }
 
 
+#region DTOs
+
+public record CreateClientRequest(string Email, string FullName, string? Password);
+public record UpdateClientRequest(string? FullName, string? Email);
 
 public record GardenerClientDto
 {
@@ -160,5 +197,14 @@ public record GardenerClientDto
     public string FullName { get; init; } = default!;
     public string Email { get; init; } = default!;
     public DateTime CreatedAt { get; init; }
+    public string? InvitationStatus { get; init; }
+    public DateTime? InvitationSentAt { get; init; }
+    public DateTime? InvitationAcceptedAt { get; init; }
+    public DateTime? InvitationExpiresAt { get; init; }
 }
 
+public record PagedResult<T>(IEnumerable<T> Items, int Total, int Page, int PageSize);
+
+public record TotalNumberResponse(int Total);
+
+#endregion

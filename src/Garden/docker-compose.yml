@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    container_name: garden-rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"    # AMQP port (for application)
+      - "15672:15672"  # Management UI (http://localhost:15672)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - garden-network
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: garden-mailhog
+    ports:
+      - "1025:1025"  # SMTP port (for application)
+      - "8025:8025"  # Web UI (http://localhost:8025)
+    networks:
+      - garden-network
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  garden-network:
+    driver: bridge

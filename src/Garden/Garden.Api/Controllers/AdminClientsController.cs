@@ -35,15 +35,45 @@ public class AdminClientsController : ControllerBase
             .OrderByDescending(c => c.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(c => new AdminClientDto
-            {
-                ClientId = c.Id,
-                FullName = c.Name,
-                Email = c.Email,
-                GardenerId = null,
-                GardenerName = null,
-                CreatedAt = c.CreatedAtUtc
-            })
+            .Select(c => new AdminClientDto(
+                ClientId: c.Id,
+                FullName: c.Name,
+                Email: c.Email,
+                Gardeners: _dbContext.GardenerClients
+                    .Where(gc => gc.ClientId == c.Id)
+                    .Join(
+                        _dbContext.Gardeners,
+                        gc => gc.GardenerId,
+                        g => g.Id,
+                        (gc, g) => new AdminClientGardenerDto(
+                            GardenerId: g.Id,
+                            CompanyName: g.CompanyName,
+                            ContactName: g.Name
+                        )
+                    )
+                    .ToList(),
+                CreatedAt: c.CreatedAtUtc,
+                InvitationStatus: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.Status.ToString())
+                    .FirstOrDefault(),
+                InvitationSentAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => (DateTime?)i.CreatedAtUtc)
+                    .FirstOrDefault(),
+                InvitationAcceptedAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.AcceptedAtUtc)
+                    .FirstOrDefault(),
+                InvitationExpiresAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => (DateTime?)i.ExpiresAtUtc)
+                    .FirstOrDefault()
+            ))
             .ToListAsync();
 
         return Ok(new PagedResult<AdminClientDto>(items, total, page, pageSize));
@@ -64,15 +94,36 @@ public class AdminClientsController : ControllerBase
         var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
         if (client == null) return NotFound();
 
-        var dto = new AdminClientDto
-        {
-            ClientId = client.Id,
-            FullName = client.Name,
-            Email = client.Email,
-            GardenerId = null,
-            GardenerName = null,
-            CreatedAt = client.CreatedAtUtc
-        };
+        var gardeners = await _dbContext.GardenerClients
+            .Where(gc => gc.ClientId == id)
+            .Join(
+                _dbContext.Gardeners,
+                gc => gc.GardenerId,
+                g => g.Id,
+                (gc, g) => new AdminClientGardenerDto(
+                    GardenerId: g.Id,
+                    CompanyName: g.CompanyName,
+                    ContactName: g.Name
+                )
+            )
+            .ToListAsync();
+
+        var invitation = await _dbContext.Invitations
+            .Where(i => i.Email == client.Email)
+            .OrderByDescending(i => i.CreatedAtUtc)
+            .FirstOrDefaultAsync();
+
+        var dto = new AdminClientDto(
+            ClientId: client.Id,
+            FullName: client.Name,
+            Email: client.Email,
+            Gardeners: gardeners,
+            CreatedAt: client.CreatedAtUtc,
+            InvitationStatus: invitation?.Status.ToString(),
+            InvitationSentAt: invitation?.CreatedAtUtc,
+            InvitationAcceptedAt: invitation?.AcceptedAtUtc,
+            InvitationExpiresAt: invitation?.ExpiresAtUtc
+        );
 
         return Ok(dto);
     }
@@ -88,15 +139,17 @@ public class AdminClientsController : ControllerBase
         {
             var client = await _clientService.CreateClientAsync(request.Email, request.FullName, initialPassword);
 
-            var dto = new AdminClientDto
-            {
-                ClientId = client.Id,
-                FullName = client.Name,
-                Email = client.Email,
-                GardenerId = null,
-                GardenerName = null,
-                CreatedAt = client.CreatedAtUtc
-            };
+            var dto = new AdminClientDto(
+                ClientId: client.Id,
+                FullName: client.Name,
+                Email: client.Email,
+                Gardeners: new List<AdminClientGardenerDto>(),
+                CreatedAt: client.CreatedAtUtc,
+                InvitationStatus: null,
+                InvitationSentAt: null,
+                InvitationAcceptedAt: null,
+                InvitationExpiresAt: null
+            );
 
             return CreatedAtAction(nameof(GetById), new { id = dto.ClientId }, dto);
         }
@@ -154,15 +207,86 @@ public class AdminClientsController : ControllerBase
 
         return NoContent();
     }
-}
 
-public record AdminClientDto
-{
-    public Guid ClientId { get; init; }
-    public string FullName { get; init; } = default!;
-    public string Email { get; init; } = default!;
-    public Guid? GardenerId { get; init; }
-    public string? GardenerName { get; init; }
-    public DateTime CreatedAt { get; init; }
+    /// <summary>
+    /// Get all gardeners for a specific client
+    /// </summary>
+    [HttpGet("{id:guid}/gardeners")]
+    public async Task<IActionResult> GetGardeners(Guid id)
+    {
+        var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.Id == id);
+        if (client == null) return NotFound("Client not found");
+
+        var gardeners = await _dbContext.GardenerClients
+            .Where(gc => gc.ClientId == id)
+            .Join(
+                _dbContext.Gardeners,
+                gc => gc.GardenerId,
+                g => g.Id,
+                (gc, g) => new AdminClientGardenerDto(
+                    GardenerId: g.Id,
+                    CompanyName: g.CompanyName,
+                    ContactName: g.Name
+                )
+            )
+            .ToListAsync();
+
+        return Ok(new { clientId = id, clientEmail = client.Email, gardeners });
+    }
+
+    /// <summary>
+    /// Get clients without any gardeners (unassigned clients)
+    /// </summary>
+    [HttpGet("unassigned")]
+    public async Task<IActionResult> GetUnassignedClients([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 100) pageSize = 20;
+
+        var clientsWithRelationships = await _dbContext.GardenerClients
+            .Select(gc => gc.ClientId)
+            .Distinct()
+            .ToListAsync();
+
+        var unassignedQuery = _dbContext.Clients
+            .Where(c => !clientsWithRelationships.Contains(c.Id))
+            .OrderByDescending(c => c.CreatedAtUtc);
+
+        var total = await unassignedQuery.CountAsync();
+
+        var items = await unassignedQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(c => new AdminClientDto(
+                ClientId: c.Id,
+                FullName: c.Name,
+                Email: c.Email,
+                Gardeners: new List<AdminClientGardenerDto>(),
+                CreatedAt: c.CreatedAtUtc,
+                InvitationStatus: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.Status.ToString())
+                    .FirstOrDefault(),
+                InvitationSentAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => (DateTime?)i.CreatedAtUtc)
+                    .FirstOrDefault(),
+                InvitationAcceptedAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => i.AcceptedAtUtc)
+                    .FirstOrDefault(),
+                InvitationExpiresAt: _dbContext.Invitations
+                    .Where(i => i.Email == c.Email)
+                    .OrderByDescending(i => i.CreatedAtUtc)
+                    .Select(i => (DateTime?)i.ExpiresAtUtc)
+                    .FirstOrDefault()
+            ))
+            .ToListAsync();
+
+        return Ok(new PagedResult<AdminClientDto>(items, total, page, pageSize));
+    }
 }
 

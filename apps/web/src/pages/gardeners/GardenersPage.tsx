@@ -1,37 +1,17 @@
 import { useCallback, useEffect, useState } from "react"
+import { GlassButton, GlassCard, GlassInput } from "../../components/ui/GlassUI"
 import AdminLayout from "../../components/layout/AdminLayout"
 import {
   createAdminGardener,
   deleteAdminGardener,
   getAdminGardeners,
   updateAdminGardener,
+  type AdminGardenerClientDto,
   type AdminGardenerDto,
   type CreateGardenerRequest,
   type UpdateGardenerRequest,
 } from "../../services/apiClient"
 import { getAccessToken, getCurrentUser, hasRole } from "../../lib/auth"
-
-const inputStyle = {
-  width: "100%" as const,
-  marginTop: 4,
-  borderRadius: 999,
-  border: "1px solid rgba(255,255,255,0.18)",
-  padding: "8px 12px",
-  backgroundColor: "rgba(3,15,8,0.9)",
-  color: "white",
-  outline: "none" as const,
-}
-
-const primaryButtonStyle = {
-  borderRadius: 999,
-  border: "none" as const,
-  padding: "8px 16px",
-  background: "linear-gradient(135deg, #d9ff6a 0%, #9dff4f 40%, #4fe368 100%)",
-  color: "#071108",
-  fontWeight: 600,
-  fontSize: 14,
-  cursor: "pointer" as const,
-}
 
 export default function GardenersPage() {
   const token = getAccessToken()
@@ -46,6 +26,7 @@ export default function GardenersPage() {
 
   const [showCreate, setShowCreate] = useState(false)
   const [editing, setEditing] = useState<AdminGardenerDto | null>(null)
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({})
   const [createForm, setCreateForm] = useState<CreateGardenerRequest>({
     email: "",
     password: "",
@@ -130,10 +111,48 @@ export default function GardenersPage() {
     setSubmitError(null)
   }
 
+  function toggleDetails(gardenerId: string) {
+    setExpandedRows((current) => ({
+      ...current,
+      [gardenerId]: !current[gardenerId],
+    }))
+  }
+
+  function renderClientsTable(clients: AdminGardenerClientDto[] | undefined) {
+    if (!clients || clients.length === 0) {
+      return <p style={{ margin: 0, fontSize: 13 }}>This gardener has no clients yet.</p>
+    }
+
+    return (
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>
+                Client name
+              </th>
+              <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>
+                Email
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {clients.map((client) => (
+              <tr key={client.clientId} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                <td style={{ padding: "10px 12px" }}>{client.fullName}</td>
+                <td style={{ padding: "10px 12px" }}>{client.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
+  }
+
   if (!isAdmin) {
     return (
       <AdminLayout title="Gardeners">
-        <p className="glass-card glass-card--soft">You don’t have access to this page.</p>
+        <GlassCard variant="outlined" padding="md">You don’t have access to this page.</GlassCard>
       </AdminLayout>
     )
   }
@@ -145,23 +164,23 @@ export default function GardenersPage() {
           <p style={{ margin: 0, fontSize: 14 }}>
             {total} gardener{total !== 1 ? "s" : ""} total
           </p>
-          <button
+          <GlassButton
             type="button"
             onClick={() => {
               setShowCreate(true)
               setSubmitError(null)
             }}
-            style={primaryButtonStyle}
+            size="sm"
           >
             Add gardener
-          </button>
+          </GlassButton>
         </div>
 
         {error && (
           <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{error}</p>
         )}
 
-        <div className="glass-card glass-card--soft">
+        <GlassCard variant="elevated" padding="md">
           {loading ? (
             <p>Loading…</p>
           ) : list.length === 0 ? (
@@ -180,50 +199,85 @@ export default function GardenersPage() {
                     <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>
                       Company
                     </th>
-                    <th style={{ width: 120 }} />
+                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>
+                      Clients
+                    </th>
+                    <th style={{ width: 260 }} />
                   </tr>
                 </thead>
                 <tbody>
-                  {list.map((g) => (
-                    <tr key={g.gardenerId} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                      <td style={{ padding: "10px 12px" }}>{g.contactName ?? "—"}</td>
-                      <td style={{ padding: "10px 12px" }}>{g.email}</td>
-                      <td style={{ padding: "10px 12px" }}>{g.companyName ?? "—"}</td>
-                      <td style={{ padding: "10px 12px" }}>
-                        <button
-                          type="button"
-                          onClick={() => openEdit(g)}
-                          style={{
-                            marginRight: 8,
-                            padding: "4px 10px",
-                            fontSize: 12,
-                            borderRadius: 999,
-                            border: "1px solid rgba(255,255,255,0.25)",
-                            background: "transparent",
-                            color: "inherit",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(g)}
-                          style={{
-                            padding: "4px 10px",
-                            fontSize: 12,
-                            borderRadius: 999,
-                            border: "1px solid rgba(248,113,113,0.5)",
-                            background: "rgba(127,29,29,0.4)",
-                            color: "#fee2e2",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                  {list.map((g) => {
+                    const isExpanded = !!expandedRows[g.gardenerId]
+
+                    return (
+                      <>
+                        <tr key={g.gardenerId} style={{ borderBottom: isExpanded ? "none" : "1px solid rgba(255,255,255,0.06)" }}>
+                          <td style={{ padding: "10px 12px" }}>{g.contactName ?? "—"}</td>
+                          <td style={{ padding: "10px 12px" }}>{g.email}</td>
+                          <td style={{ padding: "10px 12px" }}>{g.companyName ?? "—"}</td>
+                          <td style={{ padding: "10px 12px" }}>{g.clientsCount ?? g.clients?.length ?? 0}</td>
+                          <td style={{ padding: "10px 12px", whiteSpace: "nowrap" }}>
+                            <GlassButton
+                              type="button"
+                              onClick={() => toggleDetails(g.gardenerId)}
+                              size="xs"
+                              variant="ghost"
+                              style={{ marginRight: 8 }}
+                            >
+                              {isExpanded ? "Hide details ▲" : "Show details ▼"}
+                            </GlassButton>
+                            <GlassButton
+                              type="button"
+                              onClick={() => openEdit(g)}
+                              size="xs"
+                              variant="secondary"
+                              style={{ marginRight: 8 }}
+                            >
+                              Edit
+                            </GlassButton>
+                            <GlassButton
+                              type="button"
+                              onClick={() => handleDelete(g)}
+                              size="xs"
+                              variant="danger"
+                            >
+                              Delete
+                            </GlassButton>
+                          </td>
+                        </tr>
+                        {isExpanded && (
+                          <tr key={`${g.gardenerId}-details`} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                            <td colSpan={5} style={{ padding: "0 12px 14px" }}>
+                              <div
+                                style={{
+                                  marginTop: 4,
+                                  borderRadius: 18,
+                                  border: "1px solid rgba(255,255,255,0.08)",
+                                  background: "rgba(255,255,255,0.03)",
+                                  padding: 14,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    marginBottom: 10,
+                                  }}
+                                >
+                                  <h3 style={{ margin: 0, fontSize: 14 }}>Clients of {g.companyName ?? g.email}</h3>
+                                  <span style={{ fontSize: 12, opacity: 0.75 }}>
+                                    {g.clientsCount ?? g.clients?.length ?? 0} total
+                                  </span>
+                                </div>
+                                {renderClientsTable(g.clients)}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
@@ -231,149 +285,74 @@ export default function GardenersPage() {
 
           {total > pageSize && (
             <div style={{ marginTop: 16, display: "flex", gap: 8, alignItems: "center" }}>
-              <button
+              <GlassButton
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  background: "transparent",
-                  color: "inherit",
-                  cursor: page <= 1 ? "default" : "pointer",
-                  opacity: page <= 1 ? 0.5 : 1,
-                }}
+                size="xs"
+                variant="ghost"
               >
                 Previous
-              </button>
+              </GlassButton>
               <span style={{ fontSize: 13 }}>
                 Page {page} of {Math.ceil(total / pageSize)}
               </span>
-              <button
+              <GlassButton
                 type="button"
                 onClick={() => setPage((p) => p + 1)}
                 disabled={page >= Math.ceil(total / pageSize)}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 999,
-                  border: "1px solid rgba(255,255,255,0.2)",
-                  background: "transparent",
-                  color: "inherit",
-                  cursor: page >= Math.ceil(total / pageSize) ? "default" : "pointer",
-                  opacity: page >= Math.ceil(total / pageSize) ? 0.5 : 1,
-                }}
+                size="xs"
+                variant="ghost"
               >
                 Next
-              </button>
+              </GlassButton>
             </div>
           )}
-        </div>
+        </GlassCard>
 
         {showCreate && (
-          <div className="glass-card glass-card--soft" style={{ maxWidth: 480 }}>
+          <GlassCard variant="elevated" padding="md" style={{ maxWidth: 480 }}>
             <h2 style={{ marginTop: 0, marginBottom: 12 }}>Create gardener</h2>
             <form onSubmit={handleCreate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Email</label>
-                <input
-                  type="email"
-                  required
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Password</label>
-                <input
-                  type="password"
-                  required
-                  value={createForm.password}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Company name</label>
-                <input
-                  type="text"
-                  required
-                  value={createForm.companyName}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, companyName: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Contact name</label>
-                <input
-                  type="text"
-                  required
-                  value={createForm.contactName}
-                  onChange={(e) => setCreateForm((f) => ({ ...f, contactName: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
+              <GlassInput label="Email" type="email" required value={createForm.email} onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
+              <GlassInput label="Password" type="password" required value={createForm.password} onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))} fullWidth />
+              <GlassInput label="Company name" type="text" required value={createForm.companyName} onChange={(e) => setCreateForm((f) => ({ ...f, companyName: e.target.value }))} fullWidth />
+              <GlassInput label="Contact name" type="text" required value={createForm.contactName} onChange={(e) => setCreateForm((f) => ({ ...f, contactName: e.target.value }))} fullWidth />
               {submitError && (
                 <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{submitError}</p>
               )}
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="button" onClick={() => setShowCreate(false)} style={{ ...primaryButtonStyle, background: "rgba(255,255,255,0.1)", color: "inherit" }}>
+                <GlassButton type="button" onClick={() => setShowCreate(false)} variant="secondary" size="sm">
                   Cancel
-                </button>
-                <button type="submit" disabled={submitLoading} style={{ ...primaryButtonStyle, opacity: submitLoading ? 0.7 : 1 }}>
+                </GlassButton>
+                <GlassButton type="submit" loading={submitLoading} size="sm">
                   {submitLoading ? "Creating…" : "Create"}
-                </button>
+                </GlassButton>
               </div>
             </form>
-          </div>
+          </GlassCard>
         )}
 
         {editing && (
-          <div className="glass-card glass-card--soft" style={{ maxWidth: 480 }}>
+          <GlassCard variant="elevated" padding="md" style={{ maxWidth: 480 }}>
             <h2 style={{ marginTop: 0, marginBottom: 12 }}>Edit gardener</h2>
             <form onSubmit={handleUpdate} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Email</label>
-                <input
-                  type="email"
-                  required
-                  value={editForm.email ?? ""}
-                  onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Company name</label>
-                <input
-                  type="text"
-                  value={editForm.companyName ?? ""}
-                  onChange={(e) => setEditForm((f) => ({ ...f, companyName: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
-              <div>
-                <label style={{ fontSize: 12, opacity: 0.8 }}>Contact name</label>
-                <input
-                  type="text"
-                  value={editForm.contactName ?? ""}
-                  onChange={(e) => setEditForm((f) => ({ ...f, contactName: e.target.value }))}
-                  style={inputStyle}
-                />
-              </div>
+              <GlassInput label="Email" type="email" required value={editForm.email ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, email: e.target.value }))} fullWidth />
+              <GlassInput label="Company name" type="text" value={editForm.companyName ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, companyName: e.target.value }))} fullWidth />
+              <GlassInput label="Contact name" type="text" value={editForm.contactName ?? ""} onChange={(e) => setEditForm((f) => ({ ...f, contactName: e.target.value }))} fullWidth />
               {submitError && (
                 <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{submitError}</p>
               )}
               <div style={{ display: "flex", gap: 12 }}>
-                <button type="button" onClick={() => { setEditing(null); setEditForm({}) }} style={{ ...primaryButtonStyle, background: "rgba(255,255,255,0.1)", color: "inherit" }}>
+                <GlassButton type="button" onClick={() => { setEditing(null); setEditForm({}) }} variant="secondary" size="sm">
                   Cancel
-                </button>
-                <button type="submit" disabled={submitLoading} style={{ ...primaryButtonStyle, opacity: submitLoading ? 0.7 : 1 }}>
+                </GlassButton>
+                <GlassButton type="submit" loading={submitLoading} size="sm">
                   {submitLoading ? "Saving…" : "Save"}
-                </button>
+                </GlassButton>
               </div>
             </form>
-          </div>
+          </GlassCard>
         )}
       </div>
     </AdminLayout>

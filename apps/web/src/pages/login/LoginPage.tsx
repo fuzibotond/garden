@@ -1,4 +1,5 @@
 import { type FormEventHandler, useState } from "react"
+import { GlassButton, GlassCard, GlassInput } from "../../components/ui/GlassUI"
 import { useNavigate } from "react-router-dom"
 import { login } from "../../services/apiClient"
 import { hasRole, parseClaimsFromToken } from "../../lib/auth"
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  
   const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
     event.preventDefault()
     setError(null)
@@ -46,8 +48,9 @@ export default function LoginPage() {
           "radial-gradient(circle at top left, rgba(119,199,92,0.14), transparent 55%), radial-gradient(circle at bottom right, rgba(73,169,90,0.3), transparent 60%), linear-gradient(160deg,#08140b 0%,#050a06 40%,#020402 100%)",
       }}
     >
-      <div
-        className="glass-card"
+      <GlassCard
+        variant="glow"
+        padding="lg"
         style={{
           width: "100%",
           maxWidth: "420px",
@@ -61,45 +64,27 @@ export default function LoginPage() {
         </div>
         <h1 style={{ margin: 0, fontSize: 26 }}>Sign in to Garden Admin</h1>
         <p style={{ marginTop: 8, fontSize: 14 }}>
-          Manage your plants, jobs, and clients in one lush dashboard.
+           Manage your jobs and tasks in one lush dashboard.
         </p>
 
         <form onSubmit={handleSubmit} style={{ marginTop: 24, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontSize: 13 }}>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-              style={{
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.18)",
-                padding: "10px 14px",
-                backgroundColor: "rgba(3,15,8,0.9)",
-                color: "white",
-                outline: "none",
-              }}
-            />
-          </div>
+          <GlassInput
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+            fullWidth
+          />
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <label style={{ fontSize: 13 }}>Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              style={{
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.18)",
-                padding: "10px 14px",
-                backgroundColor: "rgba(3,15,8,0.9)",
-                color: "white",
-                outline: "none",
-              }}
-            />
-          </div>
+          <GlassInput
+            label="Password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            fullWidth
+          />
 
           {error && (
             <div
@@ -113,27 +98,17 @@ export default function LoginPage() {
             </div>
           )}
 
-          <button
+          <GlassButton
             type="submit"
-            disabled={loading}
-            style={{
-              marginTop: 8,
-              border: "none",
-              borderRadius: 999,
-              padding: "10px 16px",
-              fontWeight: 600,
-              fontSize: 14,
-              background:
-                "linear-gradient(135deg, #d9ff6a 0%, #9dff4f 40%, #4fe368 100%)",
-              color: "#071108",
-              cursor: loading ? "default" : "pointer",
-              opacity: loading ? 0.7 : 1,
-            }}
+            loading={loading}
+            fullWidth
+            variant="primary"
+            size="md"
           >
             {loading ? "Signing in..." : "Sign in"}
-          </button>
+          </GlassButton>
         </form>
-      </div>
+      </GlassCard>
     </div>
   )
 }

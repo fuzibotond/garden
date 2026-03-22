@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { GlassButton, GlassCard } from "../ui/GlassUI"
 import { NavLink, useNavigate } from "react-router-dom"
 import { getCurrentUser, hasRole } from "../../lib/auth"
 import { logout } from "../../services/apiClient"
@@ -29,7 +30,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
 
   return (
     <div className="admin-shell">
-      <aside className="admin-sidebar glass-card">
+      <GlassCard variant="elevated" padding="lg" className="admin-sidebar">
         <div>
           <div className="admin-sidebar__brand">Garden Admin</div>
           <p style={{ marginTop: 6, fontSize: 13, opacity: 0.8 }}>
@@ -70,7 +71,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
             My profile
           </NavLink>
         </nav>
-      </aside>
+      </GlassCard>
 
       <div className="admin-main">
         <header className="admin-header">
@@ -84,21 +85,9 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               High-level view of your garden marketplace.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            style={{
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.25)",
-              padding: "8px 14px",
-              background: "rgba(5,18,9,0.9)",
-              color: "white",
-              fontSize: 13,
-              cursor: "pointer",
-            }}
-          >
+          <GlassButton type="button" variant="secondary" size="sm" onClick={handleLogout}>
             Logout
-          </button>
+          </GlassButton>
         </header>
 
         <main>{children}</main>

@@ -62,11 +62,33 @@ export type LoginResponse = {
   refreshToken?: string
 }
 
+export type ClientSignupResponse = {
+  id: string
+  email?: string
+  name?: string
+  message?: string
+}
+
 export function login(body: LoginRequest) {
   return apiRequest<LoginResponse>("/auth/login", {
     method: "POST",
     body,
   })
+}
+
+export function clientSignup(body: ClientSignupRequest) {
+  return apiRequest<ClientSignupResponse>("/api/gardener/clients/invitations/accept", {
+    method: "POST",
+    body,
+  })
+  }
+
+export type ClientSignupRequest = {
+  token: string
+  email: string
+  fullName: string
+  password: string
+  confirmPassword: string
 }
 
 export type RegisterGardenerRequest = {
@@ -155,11 +177,19 @@ export type TotalResponse = {
 }
 
 // --- Admin: Gardeners ---
+export type AdminGardenerClientDto = {
+  clientId: string
+  fullName: string
+  email: string
+}
+
 export type AdminGardenerDto = {
   gardenerId: string
   email: string
   companyName?: string
   contactName?: string
+  clientsCount?: number
+  clients?: AdminGardenerClientDto[]
   createdAt?: string
 }
 
@@ -237,6 +267,10 @@ export type AdminClientDto = {
   fullName: string
   email: string
   createdAt?: string
+  invitationStatus?: string
+  invitationSentAt?: string
+  invitationAcceptedAt?: string
+  invitationExpiresAt?: string
 }
 
 export type CreateClientRequest = {
@@ -272,9 +306,8 @@ export function getAdminClientById(token: string, clientId: string) {
   })
 }
 
-export function createAdminClient(token: string, body: CreateClientRequest) {
+export function createAdminClient(token: string, body: InviteClientRequest) {
   const payload = {
-    ...body,
     email: normalizeEmail(body.email),
   }
   return apiRequest<AdminClientDto>("/api/admin/clients", {
@@ -311,6 +344,10 @@ export type GardenerClientDto = {
   fullName: string
   email: string
   createdAt?: string
+  invitationStatus?: string
+  invitationSentAt?: string
+  invitationAcceptedAt?: string
+  invitationExpiresAt?: string
 }
 
 export function getGardenerClients(token: string, page = 1, pageSize = 20) {
@@ -366,5 +403,57 @@ export function deleteGardenerClient(token: string, clientId: string) {
   return apiRequest<void>(`/api/gardener/clients/${clientId}`, {
     method: "DELETE",
     token,
+  })
+}
+
+// --- Invitations ---
+
+export type InvitationSummary = {
+  invitationId: string
+  email: string
+  status: "Pending" | "Accepted" | "Expired" | string
+  invitedAt: string
+  acceptedAt?: string
+}
+
+export type InviteClientRequest = {
+  email: string
+}
+
+export function inviteClientAsGardener(token: string, body: InviteClientRequest) {
+  const payload: InviteClientRequest = {
+    email: normalizeEmail(body.email),
+  }
+  return apiRequest<InvitationSummary>("/api/gardener/clients/invitations", {
+    method: "POST",
+    body: payload,
+    token,
+  })
+}
+
+export type ValidateInvitationResponse = {
+  email: string
+  gardenerName?: string
+  status: "Pending" | "Accepted" | "Expired" | string
+}
+
+export function validateInvitationToken(tokenValue: string) {
+  const params = new URLSearchParams({ token: tokenValue })
+  return apiRequest<ValidateInvitationResponse>(`/api/invitations/validate?${params.toString()}`, {
+    method: "GET",
+  })
+}
+
+export type AcceptInvitationRequest = {
+  token: string
+  password: string
+  confirmPassword: string
+  fullName: string
+}
+
+export function acceptInvitation(body: AcceptInvitationRequest) {
+  return apiRequest<void>("/api/invitations/accept", {
+    method: "POST",
+    body,
   })
 }

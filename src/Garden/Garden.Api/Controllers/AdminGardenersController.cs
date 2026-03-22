@@ -37,16 +37,27 @@ public class AdminGardenersController : ControllerBase
             .OrderByDescending(g => g.CreatedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(g => new AdminGardenerDto
-            {
-                GardenerId = g.Id,
-                CompanyName = g.CompanyName,
-                ContactName = g.Name,
-                Email = g.Email,
-                CreatedAt = g.CreatedAtUtc,
-                ClientsCount = 0,
-                JobsCount = 0
-            })
+            .Select(g => new AdminGardenerDto(
+                GardenerId: g.Id,
+                CompanyName: g.CompanyName,
+                ContactName: g.Name,
+                Email: g.Email,
+                ClientsCount: _dbContext.GardenerClients.Count(gc => gc.GardenerId == g.Id),
+                Clients: _dbContext.GardenerClients
+                    .Where(gc => gc.GardenerId == g.Id)
+                    .Join(
+                        _dbContext.Clients,
+                        gc => gc.ClientId,
+                        c => c.Id,
+                        (gc, c) => new AdminGardenerClientDto(
+                            ClientId: c.Id,
+                            FullName: c.Name,
+                            Email: c.Email
+                        )
+                    )
+                    .ToList(),
+                CreatedAt: g.CreatedAtUtc
+            ))
             .ToListAsync();
 
         return Ok(new PagedResult<AdminGardenerDto>(items, total, page, pageSize));
@@ -67,16 +78,29 @@ public class AdminGardenersController : ControllerBase
         var gardener = await _dbContext.Gardeners.FirstOrDefaultAsync(g => g.Id == id);
         if (gardener == null) return NotFound();
 
-        var dto = new AdminGardenerDto
-        {
-            GardenerId = gardener.Id,
-            CompanyName = gardener.CompanyName,
-            ContactName = gardener.Name,
-            Email = gardener.Email,
-            CreatedAt = gardener.CreatedAtUtc,
-            ClientsCount = 0,
-            JobsCount = 0
-        };
+        var clients = await _dbContext.GardenerClients
+            .Where(gc => gc.GardenerId == id)
+            .Join(
+                _dbContext.Clients,
+                gc => gc.ClientId,
+                c => c.Id,
+                (gc, c) => new AdminGardenerClientDto(
+                    ClientId: c.Id,
+                    FullName: c.Name,
+                    Email: c.Email
+                )
+            )
+            .ToListAsync();
+
+        var dto = new AdminGardenerDto(
+            GardenerId: gardener.Id,
+            CompanyName: gardener.CompanyName,
+            ContactName: gardener.Name,
+            Email: gardener.Email,
+            ClientsCount: clients.Count,
+            Clients: clients,
+            CreatedAt: gardener.CreatedAtUtc
+        );
 
         return Ok(dto);
     }
@@ -98,16 +122,15 @@ public class AdminGardenersController : ControllerBase
                 await _dbContext.SaveChangesAsync();
             }
 
-            var dto = new AdminGardenerDto
-            {
-                GardenerId = gardener.Id,
-                CompanyName = gardener.CompanyName,
-                ContactName = gardener.Name,
-                Email = gardener.Email,
-                CreatedAt = gardener.CreatedAtUtc,
-                ClientsCount = 0,
-                JobsCount = 0
-            };
+            var dto = new AdminGardenerDto(
+                GardenerId: gardener.Id,
+                CompanyName: gardener.CompanyName,
+                ContactName: gardener.Name,
+                Email: gardener.Email,
+                ClientsCount: 0,
+                Clients: new List<AdminGardenerClientDto>(),
+                CreatedAt: gardener.CreatedAtUtc
+            );
 
             return CreatedAtAction(nameof(GetById), new { id = dto.GardenerId }, dto);
         }
@@ -176,16 +199,68 @@ public class AdminGardenersController : ControllerBase
 
         return NoContent();
     }
-}
 
-public record AdminGardenerDto
-{
-    public Guid GardenerId { get; init; }
-    public string CompanyName { get; init; } = default!;
-    public string? ContactName { get; init; }
-    public string Email { get; init; } = default!;
-    public DateTime CreatedAt { get; init; }
-    public int ClientsCount { get; init; }
-    public int JobsCount { get; init; }
+    /// <summary>
+    /// Get all clients for a specific gardener
+    /// </summary>
+    [HttpGet("{id:guid}/clients")]
+    public async Task<IActionResult> GetClients(Guid id)
+    {
+        var gardener = await _dbContext.Gardeners.FirstOrDefaultAsync(g => g.Id == id);
+        if (gardener == null) return NotFound("Gardener not found");
+
+        var clients = await _dbContext.GardenerClients
+            .Where(gc => gc.GardenerId == id)
+            .Join(
+                _dbContext.Clients,
+                gc => gc.ClientId,
+                c => c.Id,
+                (gc, c) => new AdminGardenerClientDto(
+                    ClientId: c.Id,
+                    FullName: c.Name,
+                    Email: c.Email
+                )
+            )
+            .ToListAsync();
+
+        return Ok(new { gardenerId = id, gardenerEmail = gardener.Email, clientsCount = clients.Count, clients });
+    }
+
+    /// <summary>
+    /// Get gardeners without any clients (unassigned gardeners)
+    /// </summary>
+    [HttpGet("without-clients")]
+    public async Task<IActionResult> GetGardenersWithoutClients([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        if (page <= 0) page = 1;
+        if (pageSize <= 0 || pageSize > 100) pageSize = 20;
+
+        var gardenersWithClients = await _dbContext.GardenerClients
+            .Select(gc => gc.GardenerId)
+            .Distinct()
+            .ToListAsync();
+
+        var withoutClientsQuery = _dbContext.Gardeners
+            .Where(g => !gardenersWithClients.Contains(g.Id))
+            .OrderByDescending(g => g.CreatedAtUtc);
+
+        var total = await withoutClientsQuery.CountAsync();
+
+        var items = await withoutClientsQuery
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(g => new AdminGardenerDto(
+                GardenerId: g.Id,
+                CompanyName: g.CompanyName,
+                ContactName: g.Name,
+                Email: g.Email,
+                ClientsCount: 0,
+                Clients: new List<AdminGardenerClientDto>(),
+                CreatedAt: g.CreatedAtUtc
+            ))
+            .ToListAsync();
+
+        return Ok(new PagedResult<AdminGardenerDto>(items, total, page, pageSize));
+    }
 }
 

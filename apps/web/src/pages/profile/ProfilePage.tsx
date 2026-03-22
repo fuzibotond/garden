@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { GlassButton, GlassCard, GlassInput } from "../../components/ui/GlassUI"
 import AdminLayout from "../../components/layout/AdminLayout"
 import { deleteMyProfile, getMyProfile, updateMyProfile } from "../../services/apiClient"
 import { getAccessToken, getCurrentUser, hasRole } from "../../lib/auth"
@@ -87,11 +88,12 @@ export default function ProfilePage() {
 
   return (
     <AdminLayout title={title}>
-      <div
+      <GlassCard
+        variant="elevated"
+        padding="lg"
         style={{
           maxWidth: 520,
         }}
-        className="glass-card glass-card--soft"
       >
         {loading ? (
           <p>Loading profile...</p>
@@ -116,44 +118,22 @@ export default function ProfilePage() {
               </div>
 
               {hasRole(claims, "Client") || hasRole(claims, "Admin") || hasRole(claims, "Gardener") ? (
-                <div>
-                  <label style={{ fontSize: 12, opacity: 0.8 }}>Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(event) => setName(event.target.value)}
-                    style={{
-                      marginTop: 4,
-                      width: "100%",
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      padding: "8px 12px",
-                      backgroundColor: "rgba(3,15,8,0.9)",
-                      color: "white",
-                      outline: "none",
-                    }}
-                  />
-                </div>
+                <GlassInput
+                  label="Name"
+                  type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  fullWidth
+                />
               ) : null}
               {!hasRole(claims, "Client") || hasRole(claims, "Admin") || hasRole(claims, "Gardener") ? (
-                <div>
-                  <label style={{ fontSize: 12, opacity: 0.8 }}>Company Name</label>
-                  <input
-                    type="text"
-                    value={companyName}
-                    onChange={(event) => setCompanyName(event.target.value)}
-                    style={{
-                      marginTop: 4,
-                      width: "100%",
-                      borderRadius: 999,
-                      border: "1px solid rgba(255,255,255,0.18)",
-                      padding: "8px 12px",
-                      backgroundColor: "rgba(3,15,8,0.9)",
-                      color: "white",
-                      outline: "none",
-                    }}
-                  />
-                </div>
+                <GlassInput
+                  label="Company Name"
+                  type="text"
+                  value={companyName}
+                  onChange={(event) => setCompanyName(event.target.value)}
+                  fullWidth
+                />
               ) : null}
             </div>
 
@@ -165,45 +145,28 @@ export default function ProfilePage() {
                 gap: 12,
               }}
             >
-              <button
+              <GlassButton
                 type="button"
                 onClick={handleDelete}
-                style={{
-                  borderRadius: 999,
-                  border: "1px solid rgba(248,113,113,0.6)",
-                  padding: "8px 14px",
-                  background: "rgba(127, 29, 29, 0.5)",
-                  color: "#fee2e2",
-                  fontSize: 13,
-                  cursor: "pointer",
-                }}
+                variant="danger"
+                size="sm"
               >
                 Delete profile
-              </button>
+              </GlassButton>
 
-              <button
+              <GlassButton
                 type="button"
                 onClick={handleSave}
-                disabled={saving}
-                style={{
-                  borderRadius: 999,
-                  border: "none",
-                  padding: "8px 16px",
-                  background:
-                    "linear-gradient(135deg, #d9ff6a 0%, #9dff4f 40%, #4fe368 100%)",
-                  color: "#071108",
-                  fontWeight: 600,
-                  fontSize: 14,
-                  cursor: saving ? "default" : "pointer",
-                  opacity: saving ? 0.7 : 1,
-                }}
+                loading={saving}
+                variant="primary"
+                size="sm"
               >
                 {saving ? "Saving..." : "Save changes"}
-              </button>
+              </GlassButton>
             </div>
           </>
         )}
-      </div>
+      </GlassCard>
     </AdminLayout>
   )
 }
