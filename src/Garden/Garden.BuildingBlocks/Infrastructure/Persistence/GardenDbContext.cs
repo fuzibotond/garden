@@ -14,6 +14,13 @@ public class GardenDbContext : DbContext
     public DbSet<RefreshTokenRecord> RefreshTokens => Set<RefreshTokenRecord>();
     public DbSet<InvitationRecord> Invitations => Set<InvitationRecord>();
     public DbSet<GardenerClientRecord> GardenerClients => Set<GardenerClientRecord>();
+    public DbSet<MaterialRecord> Materials => Set<MaterialRecord>();
+    public DbSet<TaskTypeRecord> TaskTypes => Set<TaskTypeRecord>();
+    public DbSet<GardenerTaskTypeRecord> GardenerTaskTypes => Set<GardenerTaskTypeRecord>();
+    public DbSet<JobRecord> Jobs => Set<JobRecord>();
+    public DbSet<TaskRecord> Tasks => Set<TaskRecord>();
+    public DbSet<TaskMaterialRecord> TaskMaterials => Set<TaskMaterialRecord>();
+    public DbSet<JobGardenerRecord> JobGardeners => Set<JobGardenerRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -119,6 +126,115 @@ public class GardenDbContext : DbContext
 
             entity.HasIndex(x => x.Email).IsUnique();
         });
+
+        modelBuilder.Entity<MaterialRecord>(entity =>
+        {
+            entity.ToTable("Materials");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.GardenerId).IsRequired();
+            entity.Property(x => x.Name)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(x => x.Amount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity.Property(x => x.AmountType)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(x => x.PricePerAmount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.GardenerId);
+        });
+
+        modelBuilder.Entity<TaskTypeRecord>(entity =>
+        {
+            entity.ToTable("TaskTypes");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Name)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+        });
+
+        modelBuilder.Entity<GardenerTaskTypeRecord>(entity =>
+        {
+            entity.ToTable("GardenerTaskTypes");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.GardenerId).IsRequired();
+            entity.Property(x => x.TaskTypeId).IsRequired();
+
+            entity.HasIndex(x => new { x.GardenerId, x.TaskTypeId }).IsUnique();
+        });
+
+        modelBuilder.Entity<JobRecord>(entity =>
+        {
+            entity.ToTable("Jobs");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.ClientId).IsRequired();
+            entity.Property(x => x.Name)
+                .HasMaxLength(512)
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.ClientId);
+        });
+
+        modelBuilder.Entity<TaskRecord>(entity =>
+        {
+            entity.ToTable("Tasks");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.JobId).IsRequired();
+            entity.Property(x => x.TaskTypeId).IsRequired();
+            entity.Property(x => x.Name)
+                .HasMaxLength(512)
+                .IsRequired();
+            entity.Property(x => x.Description)
+                .HasMaxLength(2048)
+                .IsRequired(false);
+            entity.Property(x => x.EstimatedTimeMinutes).IsRequired(false);
+            entity.Property(x => x.ActualTimeMinutes).IsRequired(false);
+            entity.Property(x => x.StartedAtUtc).IsRequired(false);
+            entity.Property(x => x.FinishedAtUtc).IsRequired(false);
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.JobId);
+            entity.HasIndex(x => x.TaskTypeId);
+        });
+
+        modelBuilder.Entity<TaskMaterialRecord>(entity =>
+        {
+            entity.ToTable("TaskMaterials");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TaskId).IsRequired();
+            entity.Property(x => x.MaterialId).IsRequired();
+            entity.Property(x => x.UsedQuantity)
+                .HasPrecision(18, 2)
+                .IsRequired();
+
+            entity.HasIndex(x => new { x.TaskId, x.MaterialId }).IsUnique();
+        });
+
+        modelBuilder.Entity<JobGardenerRecord>(entity =>
+        {
+            entity.ToTable("JobGardeners");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.JobId).IsRequired();
+            entity.Property(x => x.GardenerId).IsRequired();
+
+            entity.HasIndex(x => new { x.JobId, x.GardenerId }).IsUnique();
+        });
     }
 }
 
@@ -168,4 +284,68 @@ public class GardenerClientRecord
     public Guid Id { get; set; }
     public Guid GardenerId { get; set; }
     public Guid ClientId { get; set; }
+}
+
+public class MaterialRecord
+{
+    public Guid Id { get; set; }
+    public Guid GardenerId { get; set; }
+    public string Name { get; set; } = default!;
+    public decimal Amount { get; set; }
+    public string AmountType { get; set; } = default!;
+    public decimal PricePerAmount { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+public class TaskTypeRecord
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = default!;
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+public class GardenerTaskTypeRecord
+{
+    public Guid Id { get; set; }
+    public Guid GardenerId { get; set; }
+    public Guid TaskTypeId { get; set; }
+}
+
+public class JobRecord
+{
+    public Guid Id { get; set; }
+    public Guid ClientId { get; set; }
+    public string Name { get; set; } = default!;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+public class TaskRecord
+{
+    public Guid Id { get; set; }
+    public Guid JobId { get; set; }
+    public Guid TaskTypeId { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+    public int? EstimatedTimeMinutes { get; set; }
+    public int? ActualTimeMinutes { get; set; }
+    public DateTime? StartedAtUtc { get; set; }
+    public DateTime? FinishedAtUtc { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+public class TaskMaterialRecord
+{
+    public Guid Id { get; set; }
+    public Guid TaskId { get; set; }
+    public Guid MaterialId { get; set; }
+    public decimal UsedQuantity { get; set; }
+}
+
+public class JobGardenerRecord
+{
+    public Guid Id { get; set; }
+    public Guid JobId { get; set; }
+    public Guid GardenerId { get; set; }
 }

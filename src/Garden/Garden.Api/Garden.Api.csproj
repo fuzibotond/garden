@@ -29,6 +29,7 @@
     <ProjectReference Include="..\Garden.Modules.Clients\Garden.Modules.Clients.csproj" />
     <ProjectReference Include="..\Garden.Modules.Gardeners\Garden.Modules.Gardeners.csproj" />
     <ProjectReference Include="..\Garden.Modules.Identity\Garden.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Garden.Modules.Materials\Garden.Modules.Materials.csproj" />
     <ProjectReference Include="..\Garden.Modules.Notifications\Garden.Modules.Notifications.csproj" />
     <ProjectReference Include="..\Garden.Modules.Scheduling\Garden.Modules.Scheduling.csproj" />
     <ProjectReference Include="..\Garden.Modules.Tasks\Garden.Modules.Tasks.csproj" />

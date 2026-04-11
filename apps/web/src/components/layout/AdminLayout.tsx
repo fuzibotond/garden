@@ -50,6 +50,9 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               <NavLink to="/admin/gardeners" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Gardeners
               </NavLink>
+              <NavLink to="/admin/tools" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Admin Tools
+              </NavLink>
             </>
           )}
 
@@ -63,6 +66,9 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               </NavLink>
               <NavLink to="/admin/tasks" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Tasks
+              </NavLink>
+              <NavLink to="/admin/materials" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Materials
               </NavLink>
             </>
           )}

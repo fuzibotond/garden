@@ -4,6 +4,7 @@ using Garden.BuildingBlocks.Services;
 using Garden.Modules.Clients;
 using Garden.Modules.Gardeners;
 using Garden.Modules.Identity;
+using Garden.Modules.Materials;
 using Garden.Modules.Notifications;
 using Garden.Modules.Scheduling;
 using Garden.Modules.Tasks;
@@ -37,7 +38,10 @@ Console.WriteLine($"Connection string loaded: {builder.Configuration.GetConnecti
 builder.Services.AddControllers()
     .AddApplicationPart(typeof(Garden.Modules.Clients.ModuleExtensions).Assembly)
     .AddApplicationPart(typeof(Garden.Modules.Gardeners.ModuleExtensions).Assembly)
-    .AddApplicationPart(typeof(Garden.Modules.Identity.ModuleExtensions).Assembly);
+    .AddApplicationPart(typeof(Garden.Modules.Identity.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Tasks.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Scheduling.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Materials.ModuleExtensions).Assembly);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
@@ -47,7 +51,13 @@ builder.Services.AddGardenersModule();
 builder.Services.AddClientsModule();
 builder.Services.AddTasksModule();
 builder.Services.AddSchedulingModule();
+builder.Services.AddMaterialsModule();
 builder.Services.AddNotificationsModule(builder.Configuration);
+
+// Register API feature handlers
+builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientsHandler>();
+builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientHandler>();
+builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientsTotalHandler>();
 
 // Configure event publishing with RabbitMQ
 var rabbitOptions = builder.Configuration
@@ -97,7 +107,8 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<GardenDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("GardenDb"),
-        sql => sql.EnableRetryOnFailure()));
+        sql => sql.EnableRetryOnFailure())
+    .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 builder.Services.AddScoped<IPasswordHasher<GardenerRecord>, PasswordHasher<GardenerRecord>>();
 builder.Services.AddScoped<IPasswordHasher<ClientRecord>, PasswordHasher<ClientRecord>>();

@@ -2,10 +2,13 @@
   <Project Path="../../tests/Garden.Api.Tests/Garden.Api.Tests.csproj" />
   <Project Path="Garden.Api/Garden.Api.csproj" />
   <Project Path="Garden.BuildingBlocks/Garden.BuildingBlocks.csproj" />
+  <Project Path="Garden.Modules.Catalog/Garden.Modules.Catalog.csproj" />
   <Project Path="Garden.Modules.Clients/Garden.Modules.Clients.csproj" />
   <Project Path="Garden.Modules.Gardeners/Garden.Modules.Gardeners.csproj" />
   <Project Path="Garden.Modules.Identity/Garden.Modules.Identity.csproj" />
+  <Project Path="Garden.Modules.Materials/Garden.Modules.Materials.csproj" />
   <Project Path="Garden.Modules.Notifications/Garden.Modules.Notifications.csproj" />
   <Project Path="Garden.Modules.Scheduling/Garden.Modules.Scheduling.csproj" />
   <Project Path="Garden.Modules.Tasks/Garden.Modules.Tasks.csproj" />
 </Solution>
+

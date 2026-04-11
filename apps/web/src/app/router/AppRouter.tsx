@@ -3,9 +3,11 @@ import LoginPage from "../../pages/login/LoginPage"
 import DashboardPage from "../../pages/dashboard/DashboardPage"
 import UsersPage from "../../pages/users/UsersPage"
 import GardenersPage from "../../pages/gardeners/GardenersPage"
+import AdminToolsPage from "../../pages/admin/AdminToolsPage"
 import JobsPage from "../../pages/jobs/JobsPage"
 import TasksPage from "../../pages/tasks/TasksPage"
 import ClientsPage from "../../pages/clients/ClientsPage"
+import MaterialsPage from "../../pages/materials/MaterialsPage"
 import ProfilePage from "../../pages/profile/ProfilePage"
 import AcceptInvitationPage from "../../pages/invitations/AcceptInvitationPage"
 import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
@@ -49,12 +51,14 @@ export default function AppRouter() {
           <Route path="/admin" element={<DashboardPage />} />
           <Route path="/admin/users" element={<UsersPage />} />
           <Route path="/admin/gardeners" element={<GardenersPage />} />
+          <Route path="/admin/tools" element={<AdminToolsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
           <Route path="/admin/clients" element={<ClientsPage />} />
           <Route path="/admin/jobs" element={<JobsPage />} />
           <Route path="/admin/tasks" element={<TasksPage />} />
+          <Route path="/admin/materials" element={<MaterialsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,0 +1,1035 @@
+{
+  "info": {
+    "_postman_id": "garden-app-api-collection",
+    "name": "Garden App API",
+    "description": "Complete API collection for Garden App - Gardener Service Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"gardener@example.com\",\n  \"password\": \"P@ssw0rd!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register Gardener",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newgardener@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\",\n  \"companyName\": \"Garden Services\",\n  \"contactName\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register/gardener",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register", "gardener"]
+            }
+          }
+        },
+        {
+          "name": "Register Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\",\n  \"fullName\": \"Jane Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register/client",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register", "client"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Get My Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Delete My Profile",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gardener - Clients",
+      "item": [
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "{{client_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Total Clients Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/total",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "total"]
+            }
+          }
+        },
+        {
+          "name": "Invite Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newclient@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/invitations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "invitations"]
+            }
+          }
+        },
+        {
+          "name": "Get Invitation by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/invitations/{{invitation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "invitations", "{{invitation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Validate Invitation Token",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/invitations/validate-token?token={{invitation_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "invitations", "validate-token"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{invitation_token}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Accept Invitation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{invitation_token}}\",\n  \"password\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\",\n  \"fullName\": \"Jane Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/invitations/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "invitations", "accept"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gardener - Jobs",
+      "item": [
+        {
+          "name": "Create Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{client_id}}\",\n  \"name\": \"Front Garden Maintenance\",\n  \"gardenerIds\": [\"{{gardener_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs"]
+            }
+          }
+        },
+        {
+          "name": "Get All Jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs", "{{job_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Job",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Job Name\",\n  \"gardenerIds\": [\"{{gardener_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs", "{{job_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Job",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs", "{{job_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}/tasks?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs", "{{job_id}}", "tasks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Task in Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Trim hedges\",\n  \"description\": \"Trim front and side hedges\",\n  \"estimatedTimeMinutes\": 120\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "jobs", "{{job_id}}", "tasks"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gardener - Tasks",
+      "item": [
+        {
+          "name": "Create Task",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jobId\": \"{{job_id}}\",\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Mow lawn\",\n  \"description\": \"Cut grass to 2cm\",\n  \"estimatedTimeMinutes\": 60\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "tasks"]
+            }
+          }
+        },
+        {
+          "name": "Get Task by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "tasks", "{{task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Task Name\",\n  \"actualTimeMinutes\": 55,\n  \"finishedAt\": \"2025-03-22T14:30:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "tasks", "{{task_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/tasks/{{task_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "tasks", "{{task_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gardener - Materials",
+      "item": [
+        {
+          "name": "Create Material",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fertilizer\",\n  \"amount\": 50,\n  \"amountType\": \"kg\",\n  \"pricePerAmount\": 2.50\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/materials",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "materials"]
+            }
+          }
+        },
+        {
+          "name": "Get All Materials",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/materials?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "materials"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Material by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "materials", "{{material_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Material",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Material Name\",\n  \"amount\": 75,\n  \"amountType\": \"kg\",\n  \"pricePerAmount\": 2.75\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "materials", "{{material_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Material",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/materials/{{material_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "materials", "{{material_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Clients",
+      "item": [
+        {
+          "name": "Get All Clients",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/clients?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "clients"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Client by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/clients/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "clients", "{{client_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Total Clients Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/clients/total",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "clients", "total"]
+            }
+          }
+        },
+        {
+          "name": "Create Client",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin-created-client@example.com\",\n  \"fullName\": \"New Client\",\n  \"password\": \"TempP@ss123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/clients",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "clients"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Gardeners",
+      "item": [
+        {
+          "name": "Get All Gardeners",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/gardeners?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gardeners"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Gardener by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/gardeners/{{gardener_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gardeners", "{{gardener_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Total Gardeners Count",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/gardeners/total",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gardeners", "total"]
+            }
+          }
+        },
+        {
+          "name": "Create Gardener",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"new-gardener@example.com\",\n  \"password\": \"SecureP@ss123!\",\n  \"companyName\": \"New Garden Co\",\n  \"contactName\": \"John Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/gardeners",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "gardeners"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - Relationships",
+      "item": [
+        {
+          "name": "Get All Relationships",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/relationships?page=1&pageSize=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "relationships"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Relationships by Gardener",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/relationships/gardeners/{{gardener_id}}?page=1&pageSize=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "relationships", "gardeners", "{{gardener_id}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Relationships by Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/relationships/clients/{{client_id}}?page=1&pageSize=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "relationships", "clients", "{{client_id}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Relationship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{client_id}}\",\n  \"gardenerId\": \"{{gardener_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/admin/relationships",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "relationships"]
+            }
+          }
+        },
+        {
+          "name": "Delete Relationship",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/relationships/{{client_id}}/{{gardener_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "relationships", "{{client_id}}", "{{gardener_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "gardener_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "job_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_type_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "material_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitation_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
