@@ -30,7 +30,6 @@ public class GetMaterialHandler
         {
             MaterialId = material.Id,
             Name = material.Name,
-            Amount = material.Amount,
             AmountType = material.AmountType,
             PricePerAmount = material.PricePerAmount,
             CreatedAt = material.CreatedAtUtc

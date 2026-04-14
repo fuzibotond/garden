@@ -1,3 +1,4 @@
+using Garden.Modules.Scheduling.Features.Invoice;
 using Garden.Modules.Scheduling.Features.Jobs;
 using Garden.Modules.Tasks.Features.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -89,6 +90,54 @@ public class JobsController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpPost("{jobId:guid}/close")]
+    public async Task<IActionResult> CloseJob([FromServices] CloseJobHandler handler, Guid jobId)
+    {
+        try
+        {
+            var response = await handler.Handle(jobId);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    [HttpGet("{jobId:guid}/invoice")]
+    public async Task<IActionResult> GetInvoice([FromServices] GetInvoiceHandler handler, Guid jobId)
+    {
+        try
+        {
+            var (pdf, fileName) = await handler.Handle(jobId);
+            return File(pdf, "application/pdf", fileName);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(403, ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Garden.Modules.Scheduling.Features.Jobs;
+﻿using Garden.Modules.Scheduling.Features.Invoice;
+using Garden.Modules.Scheduling.Features.Jobs;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Garden.Modules.Scheduling;
@@ -12,6 +13,8 @@ public static class ModuleExtensions
         services.AddScoped<GetJobsHandler>();
         services.AddScoped<UpdateJobHandler>();
         services.AddScoped<DeleteJobHandler>();
+        services.AddScoped<CloseJobHandler>();
+        services.AddScoped<GetInvoiceHandler>();
 
         return services;
     }

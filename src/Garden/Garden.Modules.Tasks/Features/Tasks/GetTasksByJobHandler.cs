@@ -27,12 +27,23 @@ public class GetTasksByJobHandler
             .Select(t => new TaskItemDto
             {
                 TaskId = t.Id,
+                TaskTypeId = t.TaskTypeId,
+                TaskTypeName = _dbContext.TaskTypes
+                    .Where(tt => tt.Id == t.TaskTypeId)
+                    .Select(tt => tt.Name)
+                    .FirstOrDefault() ?? string.Empty,
                 Name = t.Name,
                 Description = t.Description,
                 EstimatedTimeMinutes = t.EstimatedTimeMinutes,
                 ActualTimeMinutes = t.ActualTimeMinutes,
+                WagePerHour = t.WagePerHour,
                 StartedAt = t.StartedAtUtc,
                 FinishedAt = t.FinishedAtUtc,
+                TotalMaterialCost = _dbContext.TaskMaterials
+                    .Where(tm => tm.TaskId == t.Id)
+                    .Select(tm => (decimal?)(tm.UsedQuantity * (tm.SnapshotPricePerAmount ?? 0m)))
+                    .Sum() ?? 0m,
+                TotalLaborCost = ((t.ActualTimeMinutes ?? 0) / 60m) * (t.WagePerHour ?? 0m),
                 CreatedAt = t.CreatedAtUtc
             })
             .ToListAsync();

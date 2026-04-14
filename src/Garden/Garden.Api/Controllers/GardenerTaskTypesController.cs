@@ -34,6 +34,8 @@ public class GardenerTaskTypesController : ControllerBase
                 tt => tt.Id,
                 (gtt, tt) => new { tt.Id, tt.Name }
             )
+            .GroupBy(t => t.Name)
+            .Select(g => new { Id = g.Min(x => x.Id), Name = g.Key })
             .OrderBy(t => t.Name)
             .Select(t => new { t.Id, t.Name })
             .ToListAsync();

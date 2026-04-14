@@ -26,12 +26,13 @@ public class GetTaskTypesHandler
                 tt => tt.Id,
                 (gtt, tt) => tt
             )
-            .OrderBy(t => t.Name)
-            .Select(t => new TaskTypeDto
+            .GroupBy(t => t.Name)
+            .Select(g => new TaskTypeDto
             {
-                Id = t.Id,
-                Name = t.Name
+                Id = g.Min(t => t.Id),
+                Name = g.Key
             })
+            .OrderBy(t => t.Name)
             .ToListAsync();
 
         return new GetTaskTypesResponse

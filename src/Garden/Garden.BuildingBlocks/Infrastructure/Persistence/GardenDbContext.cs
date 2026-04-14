@@ -136,9 +136,6 @@ public class GardenDbContext : DbContext
             entity.Property(x => x.Name)
                 .HasMaxLength(256)
                 .IsRequired();
-            entity.Property(x => x.Amount)
-                .HasPrecision(18, 2)
-                .IsRequired();
             entity.Property(x => x.AmountType)
                 .HasMaxLength(50)
                 .IsRequired();
@@ -181,6 +178,8 @@ public class GardenDbContext : DbContext
             entity.Property(x => x.Name)
                 .HasMaxLength(512)
                 .IsRequired();
+            entity.Property(x => x.ClosedAtUtc).IsRequired(false);
+            entity.Property(x => x.InvoiceNumber).HasMaxLength(50).IsRequired(false);
             entity.Property(x => x.CreatedAtUtc).IsRequired();
             entity.Property(x => x.UpdatedAtUtc).IsRequired();
 
@@ -202,6 +201,9 @@ public class GardenDbContext : DbContext
                 .IsRequired(false);
             entity.Property(x => x.EstimatedTimeMinutes).IsRequired(false);
             entity.Property(x => x.ActualTimeMinutes).IsRequired(false);
+            entity.Property(x => x.WagePerHour)
+                .HasPrecision(18, 2)
+                .IsRequired(false);
             entity.Property(x => x.StartedAtUtc).IsRequired(false);
             entity.Property(x => x.FinishedAtUtc).IsRequired(false);
             entity.Property(x => x.CreatedAtUtc).IsRequired();
@@ -221,6 +223,15 @@ public class GardenDbContext : DbContext
             entity.Property(x => x.UsedQuantity)
                 .HasPrecision(18, 2)
                 .IsRequired();
+            entity.Property(x => x.SnapshotName)
+                .HasMaxLength(256)
+                .IsRequired(false);
+            entity.Property(x => x.SnapshotAmountType)
+                .HasMaxLength(50)
+                .IsRequired(false);
+            entity.Property(x => x.SnapshotPricePerAmount)
+                .HasPrecision(18, 2)
+                .IsRequired(false);
 
             entity.HasIndex(x => new { x.TaskId, x.MaterialId }).IsUnique();
         });
@@ -291,7 +302,6 @@ public class MaterialRecord
     public Guid Id { get; set; }
     public Guid GardenerId { get; set; }
     public string Name { get; set; } = default!;
-    public decimal Amount { get; set; }
     public string AmountType { get; set; } = default!;
     public decimal PricePerAmount { get; set; }
     public DateTime CreatedAtUtc { get; set; }
@@ -316,6 +326,8 @@ public class JobRecord
     public Guid Id { get; set; }
     public Guid ClientId { get; set; }
     public string Name { get; set; } = default!;
+    public DateTime? ClosedAtUtc { get; set; }
+    public string? InvoiceNumber { get; set; }
     public DateTime CreatedAtUtc { get; set; }
     public DateTime UpdatedAtUtc { get; set; }
 }
@@ -329,6 +341,7 @@ public class TaskRecord
     public string? Description { get; set; }
     public int? EstimatedTimeMinutes { get; set; }
     public int? ActualTimeMinutes { get; set; }
+    public decimal? WagePerHour { get; set; }
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? FinishedAtUtc { get; set; }
     public DateTime CreatedAtUtc { get; set; }
@@ -341,6 +354,9 @@ public class TaskMaterialRecord
     public Guid TaskId { get; set; }
     public Guid MaterialId { get; set; }
     public decimal UsedQuantity { get; set; }
+    public string? SnapshotName { get; set; }
+    public string? SnapshotAmountType { get; set; }
+    public decimal? SnapshotPricePerAmount { get; set; }
 }
 
 public class JobGardenerRecord

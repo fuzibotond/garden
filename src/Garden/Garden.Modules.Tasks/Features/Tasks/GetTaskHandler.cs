@@ -18,6 +18,19 @@ public class GetTaskHandler
         if (task == null)
             return null;
 
+        var materials = await _dbContext.TaskMaterials
+            .Where(tm => tm.TaskId == taskId)
+            .Select(tm => new TaskMaterialDto
+            {
+                MaterialId = tm.MaterialId,
+                Name = tm.SnapshotName ?? string.Empty,
+                AmountType = tm.SnapshotAmountType ?? string.Empty,
+                UsedQuantity = tm.UsedQuantity,
+                PricePerAmount = tm.SnapshotPricePerAmount ?? 0m,
+                TotalCost = tm.UsedQuantity * (tm.SnapshotPricePerAmount ?? 0m)
+            })
+            .ToListAsync();
+
         return new GetTaskResponse
         {
             TaskId = task.Id,
@@ -27,8 +40,12 @@ public class GetTaskHandler
             Description = task.Description,
             EstimatedTimeMinutes = task.EstimatedTimeMinutes,
             ActualTimeMinutes = task.ActualTimeMinutes,
+            WagePerHour = task.WagePerHour,
             StartedAt = task.StartedAtUtc,
             FinishedAt = task.FinishedAtUtc,
+            Materials = materials,
+            TotalMaterialCost = materials.Sum(m => m.TotalCost),
+            TotalLaborCost = ((task.ActualTimeMinutes ?? 0) / 60m) * (task.WagePerHour ?? 0m),
             CreatedAt = task.CreatedAtUtc,
             UpdatedAt = task.UpdatedAtUtc
         };

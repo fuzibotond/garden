@@ -54,10 +54,13 @@ export default function AppRouter() {
           <Route path="/admin/tools" element={<AdminToolsPage />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener", "Client"]} />}>
           <Route path="/admin/clients" element={<ClientsPage />} />
           <Route path="/admin/jobs" element={<JobsPage />} />
           <Route path="/admin/tasks" element={<TasksPage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
           <Route path="/admin/materials" element={<MaterialsPage />} />
         </Route>
       </Routes>

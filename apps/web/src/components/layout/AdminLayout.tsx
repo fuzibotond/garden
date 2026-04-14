@@ -14,6 +14,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
   const user = getCurrentUser()
   const isAdmin = hasRole(user, "Admin")
   const isGardener = hasRole(user, "Gardener")
+  const isClient = hasRole(user, "Client")
 
   async function handleLogout() {
     const token = localStorage.getItem("accessToken")
@@ -69,6 +70,17 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               </NavLink>
               <NavLink to="/admin/materials" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Materials
+              </NavLink>
+            </>
+          )}
+
+          {isClient && !isAdmin && !isGardener && (
+            <>
+              <NavLink to="/admin/jobs" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Jobs
+              </NavLink>
+              <NavLink to="/admin/tasks" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Tasks
               </NavLink>
             </>
           )}

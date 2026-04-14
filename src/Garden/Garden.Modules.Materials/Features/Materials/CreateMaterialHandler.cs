@@ -30,7 +30,6 @@ public class CreateMaterialHandler
             Id = materialId,
             GardenerId = userId.Value,
             Name = request.Name,
-            Amount = request.Amount,
             AmountType = request.AmountType,
             PricePerAmount = request.PricePerAmount,
             CreatedAtUtc = now
@@ -43,7 +42,6 @@ public class CreateMaterialHandler
         {
             MaterialId = materialId,
             Name = request.Name,
-            Amount = request.Amount,
             AmountType = request.AmountType,
             PricePerAmount = request.PricePerAmount,
             CreatedAt = now

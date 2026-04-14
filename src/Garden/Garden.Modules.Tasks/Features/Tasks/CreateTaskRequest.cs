@@ -7,4 +7,6 @@ public record CreateTaskRequest
     public string Name { get; init; } = default!;
     public string? Description { get; init; }
     public int? EstimatedTimeMinutes { get; init; }
+    public decimal? WagePerHour { get; init; }
+    public List<TaskMaterialInput>? Materials { get; init; }
 }

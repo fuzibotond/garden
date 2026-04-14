@@ -518,6 +518,20 @@ export type JobDto = {
   linkedGardeners?: JobLinkedGardenerDto[]
   gardenerIds?: string[]
   taskCount?: number
+  finishedTaskCount?: number
+  inProgressTaskCount?: number
+  notStartedTaskCount?: number
+  progressPercent?: number
+  totalMaterialCost?: number
+  totalLaborCost?: number
+  totalCost?: number
+  totalEstimatedTimeMinutes?: number
+  totalActualTimeMinutes?: number
+  timeDifferenceMinutes?: number
+  actualVsEstimatedPercent?: number
+  isClosed?: boolean
+  closedAt?: string
+  invoiceNumber?: string
   createdAt?: string
 }
 
@@ -549,6 +563,30 @@ type RawJobDto = {
   gardeners?: RawLinkedGardener[]
   gardenerIds?: string[]
   taskCount?: number
+  finishedTaskCount?: number
+  inProgressTaskCount?: number
+  notStartedTaskCount?: number
+  progressPercent?: number
+  totalMaterialCost?: number
+  TotalMaterialCost?: number
+  totalLaborCost?: number
+  TotalLaborCost?: number
+  totalCost?: number
+  TotalCost?: number
+  totalEstimatedTimeMinutes?: number
+  TotalEstimatedTimeMinutes?: number
+  totalActualTimeMinutes?: number
+  TotalActualTimeMinutes?: number
+  timeDifferenceMinutes?: number
+  TimeDifferenceMinutes?: number
+  actualVsEstimatedPercent?: number
+  ActualVsEstimatedPercent?: number
+  isClosed?: boolean
+  IsClosed?: boolean
+  closedAt?: string
+  ClosedAt?: string
+  invoiceNumber?: string
+  InvoiceNumber?: string
   createdAt?: string
   createdAtUtc?: string
 }
@@ -589,6 +627,20 @@ function normalizeJob(raw: RawJobDto | undefined): JobDto {
     linkedGardeners,
     gardenerIds: raw?.gardenerIds,
     taskCount: raw?.taskCount,
+    finishedTaskCount: raw?.finishedTaskCount,
+    inProgressTaskCount: raw?.inProgressTaskCount,
+    notStartedTaskCount: raw?.notStartedTaskCount,
+    progressPercent: raw?.progressPercent,
+    totalMaterialCost: raw?.totalMaterialCost ?? raw?.TotalMaterialCost,
+    totalLaborCost: raw?.totalLaborCost ?? raw?.TotalLaborCost,
+    totalCost: raw?.totalCost ?? raw?.TotalCost,
+    totalEstimatedTimeMinutes: raw?.totalEstimatedTimeMinutes ?? raw?.TotalEstimatedTimeMinutes,
+    totalActualTimeMinutes: raw?.totalActualTimeMinutes ?? raw?.TotalActualTimeMinutes,
+    timeDifferenceMinutes: raw?.timeDifferenceMinutes ?? raw?.TimeDifferenceMinutes,
+    actualVsEstimatedPercent: raw?.actualVsEstimatedPercent ?? raw?.ActualVsEstimatedPercent,
+    isClosed: raw?.isClosed ?? raw?.IsClosed,
+    closedAt: raw?.closedAt ?? raw?.ClosedAt,
+    invoiceNumber: raw?.invoiceNumber ?? raw?.InvoiceNumber,
     createdAt: raw?.createdAt ?? raw?.createdAtUtc,
   }
 }
@@ -626,8 +678,29 @@ export function getGardenerJobs(token: string, page = 1, pageSize = 20) {
   })
 }
 
+export function getClientJobs(token: string, page = 1, pageSize = 20) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<RawPagedResponse<RawJobDto>>(`/api/client/jobs?${params.toString()}`, {
+    method: "GET",
+    token,
+  }).then((response) => {
+    const normalized = normalizePagedResponse(response, page, pageSize)
+    return {
+      ...normalized,
+      items: normalized.items.map((job) => normalizeJob(job)),
+    }
+  })
+}
+
 export function getGardenerJobById(token: string, jobId: string) {
   return apiRequest<RawJobDto>(`/api/gardener/jobs/${jobId}`, {
+    method: "GET",
+    token,
+  }).then((response) => normalizeJob(response))
+}
+
+export function getClientJobById(token: string, jobId: string) {
+  return apiRequest<RawJobDto>(`/api/client/jobs/${jobId}`, {
     method: "GET",
     token,
   }).then((response) => normalizeJob(response))
@@ -648,17 +721,80 @@ export function deleteGardenerJob(token: string, jobId: string) {
   })
 }
 
+export function closeGardenerJob(token: string, jobId: string) {
+  return apiRequest<RawJobDto>(`/api/gardener/jobs/${jobId}/close`, {
+    method: "POST",
+    token,
+  }).then((response) => normalizeJob(response))
+}
+
+async function downloadBlobFromApi(path: string, token: string, filename: string): Promise<void> {
+  const response = await fetch(`${env.apiUrl}${path}`, {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (!response.ok) {
+    const text = await response.text().catch(() => "Failed to download")
+    throw new Error(text || "Failed to download")
+  }
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement("a")
+  anchor.href = url
+  anchor.download = filename
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
+}
+
+export function downloadGardenerJobInvoice(token: string, jobId: string, invoiceNumber?: string) {
+  return downloadBlobFromApi(
+    `/api/gardener/jobs/${jobId}/invoice`,
+    token,
+    `${invoiceNumber ?? jobId}.pdf`,
+  )
+}
+
+export function downloadClientJobInvoice(token: string, jobId: string, invoiceNumber?: string) {
+  return downloadBlobFromApi(
+    `/api/client/jobs/${jobId}/invoice`,
+    token,
+    `${invoiceNumber ?? jobId}.pdf`,
+  )
+}
+
 // --- Gardener: Tasks ---
 export type TaskDto = {
   taskId: string
   jobId: string
   taskTypeId?: string
+  taskTypeName?: string
   name: string
   description?: string
   estimatedTimeMinutes?: number
   actualTimeMinutes?: number
+  wagePerHour?: number
   startedAt?: string
   finishedAt?: string
+  materials?: TaskMaterialDto[]
+  totalMaterialCost?: number
+  totalLaborCost?: number
+  totalCost?: number
+}
+
+export type TaskMaterialInput = {
+  materialId: string
+  usedQuantity: number
+}
+
+export type TaskMaterialDto = {
+  materialId: string
+  name: string
+  amountType: string
+  usedQuantity: number
+  pricePerAmount: number
+  totalCost: number
 }
 
 export type CreateTaskRequest = {
@@ -667,6 +803,8 @@ export type CreateTaskRequest = {
   name: string
   description?: string
   estimatedTimeMinutes?: number
+  wagePerHour?: number
+  materials?: TaskMaterialInput[]
 }
 
 export type CreateTaskInJobRequest = {
@@ -674,19 +812,31 @@ export type CreateTaskInJobRequest = {
   name: string
   description?: string
   estimatedTimeMinutes?: number
+  wagePerHour?: number
+  materials?: TaskMaterialInput[]
 }
 
 export type UpdateTaskRequest = {
   name?: string
   description?: string
   actualTimeMinutes?: number
+  wagePerHour?: number
   startedAt?: string
   finishedAt?: string
+  materials?: TaskMaterialInput[]
 }
 
 export function getGardenerJobTasks(token: string, jobId: string, page = 1, pageSize = 20) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   return apiRequest<RawPagedResponse<TaskDto>>(`/api/gardener/jobs/${jobId}/tasks?${params.toString()}`, {
+    method: "GET",
+    token,
+  }).then((response) => normalizePagedResponse(response, page, pageSize))
+}
+
+export function getClientJobTasks(token: string, jobId: string, page = 1, pageSize = 20) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<RawPagedResponse<TaskDto>>(`/api/client/jobs/${jobId}/tasks?${params.toString()}`, {
     method: "GET",
     token,
   }).then((response) => normalizePagedResponse(response, page, pageSize))
@@ -829,7 +979,7 @@ export type MaterialDto = {
 
 export type CreateMaterialRequest = {
   name: string
-  amount: number
+  amount?: number
   amountType: string
   pricePerAmount: number
 }

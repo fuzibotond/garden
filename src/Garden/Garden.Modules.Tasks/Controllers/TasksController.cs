@@ -25,6 +25,10 @@ public class TasksController : ControllerBase
         {
             return NotFound(ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpGet("{taskId}")]
@@ -40,12 +44,27 @@ public class TasksController : ControllerBase
     [HttpPut("{taskId}")]
     public async Task<IActionResult> UpdateTask([FromServices] UpdateTaskHandler handler, Guid taskId, [FromBody] UpdateTaskRequest request)
     {
-        var updateRequest = request with { TaskId = taskId };
-        var response = await handler.Handle(updateRequest);
-        if (response == null)
-            return NotFound();
+        try
+        {
+            var updateRequest = request with { TaskId = taskId };
+            var response = await handler.Handle(updateRequest);
+            if (response == null)
+                return NotFound();
 
-        return Ok(response);
+            return Ok(response);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
     }
 
     [HttpDelete("{taskId}")]

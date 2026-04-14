@@ -14,7 +14,6 @@ import {
 
 type MaterialFormState = {
   name: string
-  amount: string
   amountType: string
   pricePerAmount: string
 }
@@ -33,7 +32,6 @@ function isAlreadyDeletedError(err: unknown): boolean {
 function materialToForm(material: MaterialDto): MaterialFormState {
   return {
     name: material.name,
-    amount: String(material.amount),
     amountType: material.amountType,
     pricePerAmount: String(material.pricePerAmount),
   }
@@ -55,13 +53,11 @@ export default function MaterialsPage() {
   const [editing, setEditing] = useState<MaterialDto | null>(null)
   const [createForm, setCreateForm] = useState<MaterialFormState>({
     name: "",
-    amount: "",
     amountType: "kg",
     pricePerAmount: "",
   })
   const [editForm, setEditForm] = useState<MaterialFormState>({
     name: "",
-    amount: "",
     amountType: "kg",
     pricePerAmount: "",
   })
@@ -97,13 +93,12 @@ export default function MaterialsPage() {
     try {
       const body: CreateMaterialRequest = {
         name: createForm.name,
-        amount: Number(createForm.amount),
         amountType: createForm.amountType,
         pricePerAmount: Number(createForm.pricePerAmount),
       }
       await createGardenerMaterial(token, body)
       setShowCreate(false)
-      setCreateForm({ name: "", amount: "", amountType: "kg", pricePerAmount: "" })
+      setCreateForm({ name: "", amountType: "kg", pricePerAmount: "" })
       void load()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to create material")
@@ -121,13 +116,12 @@ export default function MaterialsPage() {
     try {
       const body: UpdateMaterialRequest = {
         name: editForm.name,
-        amount: Number(editForm.amount),
         amountType: editForm.amountType,
         pricePerAmount: Number(editForm.pricePerAmount),
       }
       await updateGardenerMaterial(token, editing.materialId, body)
       setEditing(null)
-      setEditForm({ name: "", amount: "", amountType: "kg", pricePerAmount: "" })
+      setEditForm({ name: "", amountType: "kg", pricePerAmount: "" })
       void load()
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to update material")
@@ -202,7 +196,6 @@ export default function MaterialsPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>Name</th>
-                    <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>Amount</th>
                     <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>Unit</th>
                     <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>Price per unit</th>
                     <th style={{ width: 170 }} />
@@ -212,7 +205,6 @@ export default function MaterialsPage() {
                   {list.map((material) => (
                     <tr key={material.materialId} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                       <td style={{ padding: "10px 12px" }}>{material.name}</td>
-                      <td style={{ padding: "10px 12px" }}>{material.amount}</td>
                       <td style={{ padding: "10px 12px" }}>{material.amountType}</td>
                       <td style={{ padding: "10px 12px" }}>{material.pricePerAmount}</td>
                       <td style={{ padding: "10px 12px", display: "flex", gap: 8, justifyContent: "flex-end" }}>
@@ -276,16 +268,6 @@ export default function MaterialsPage() {
                 fullWidth
               />
               <GlassInput
-                label="Amount"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                value={createForm.amount}
-                onChange={(e) => setCreateForm((current) => ({ ...current, amount: e.target.value }))}
-                fullWidth
-              />
-              <GlassInput
                 label="Amount type"
                 type="text"
                 required
@@ -331,16 +313,6 @@ export default function MaterialsPage() {
                 fullWidth
               />
               <GlassInput
-                label="Amount"
-                type="number"
-                min="0"
-                step="0.01"
-                required
-                value={editForm.amount}
-                onChange={(e) => setEditForm((current) => ({ ...current, amount: e.target.value }))}
-                fullWidth
-              />
-              <GlassInput
                 label="Amount type"
                 type="text"
                 required
@@ -366,7 +338,7 @@ export default function MaterialsPage() {
                   type="button"
                   onClick={() => {
                     setEditing(null)
-                    setEditForm({ name: "", amount: "", amountType: "kg", pricePerAmount: "" })
+                    setEditForm({ name: "", amountType: "kg", pricePerAmount: "" })
                   }}
                   variant="secondary"
                   size="sm"

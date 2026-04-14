@@ -81,6 +81,9 @@ public class UpdateJobHandler
             Name = job.Name,
             Tasks = tasks,
             AssignedGardeners = gardeners,
+            IsClosed = job.ClosedAtUtc.HasValue,
+            ClosedAt = job.ClosedAtUtc,
+            InvoiceNumber = job.InvoiceNumber,
             CreatedAt = job.CreatedAtUtc,
             UpdatedAt = job.UpdatedAtUtc
         };

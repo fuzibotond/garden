@@ -46,6 +46,11 @@ public class CreateTaskHandler
             throw new UnauthorizedAccessException($"Task type {request.TaskTypeId} is not assigned to you");
         }
 
+        if (request.WagePerHour.HasValue && request.WagePerHour.Value < 0)
+        {
+            throw new InvalidOperationException("Wage per hour cannot be negative.");
+        }
+
         var taskId = Guid.NewGuid();
         var now = DateTime.UtcNow;
 
@@ -57,12 +62,71 @@ public class CreateTaskHandler
             Name = request.Name,
             Description = request.Description,
             EstimatedTimeMinutes = request.EstimatedTimeMinutes,
+            WagePerHour = request.WagePerHour,
             CreatedAtUtc = now,
             UpdatedAtUtc = now
         };
 
         _dbContext.Tasks.Add(task);
+
+        var requestedMaterials = request.Materials ?? [];
+        if (requestedMaterials.Count > 0)
+        {
+            if (requestedMaterials.Any(m => m.UsedQuantity <= 0))
+            {
+                throw new InvalidOperationException("Material quantity must be greater than zero.");
+            }
+
+            var materialQuantities = requestedMaterials
+                .GroupBy(m => m.MaterialId)
+                .Select(g => new
+                {
+                    MaterialId = g.Key,
+                    UsedQuantity = g.Sum(x => x.UsedQuantity)
+                })
+                .ToList();
+
+            var materialIds = materialQuantities.Select(x => x.MaterialId).ToList();
+
+            var materials = await _dbContext.Materials
+                .Where(m => m.GardenerId == userId.Value && materialIds.Contains(m.Id))
+                .ToListAsync();
+
+            if (materials.Count != materialIds.Count)
+            {
+                throw new KeyNotFoundException("One or more materials were not found for this gardener.");
+            }
+
+            foreach (var materialQuantity in materialQuantities)
+            {
+                var material = materials.First(m => m.Id == materialQuantity.MaterialId);
+                _dbContext.TaskMaterials.Add(new TaskMaterialRecord
+                {
+                    Id = Guid.NewGuid(),
+                    TaskId = taskId,
+                    MaterialId = materialQuantity.MaterialId,
+                    UsedQuantity = materialQuantity.UsedQuantity,
+                    SnapshotName = material.Name,
+                    SnapshotAmountType = material.AmountType,
+                    SnapshotPricePerAmount = material.PricePerAmount
+                });
+            }
+        }
+
         await _dbContext.SaveChangesAsync();
+
+        var responseMaterials = await _dbContext.TaskMaterials
+            .Where(tm => tm.TaskId == taskId)
+            .Select(tm => new TaskMaterialDto
+            {
+                MaterialId = tm.MaterialId,
+                Name = tm.SnapshotName ?? string.Empty,
+                AmountType = tm.SnapshotAmountType ?? string.Empty,
+                UsedQuantity = tm.UsedQuantity,
+                PricePerAmount = tm.SnapshotPricePerAmount ?? 0m,
+                TotalCost = tm.UsedQuantity * (tm.SnapshotPricePerAmount ?? 0m)
+            })
+            .ToListAsync();
 
         return new CreateTaskResponse
         {
@@ -72,6 +136,10 @@ public class CreateTaskHandler
             Name = request.Name,
             Description = request.Description,
             EstimatedTimeMinutes = request.EstimatedTimeMinutes,
+            WagePerHour = task.WagePerHour,
+            Materials = responseMaterials,
+            TotalMaterialCost = responseMaterials.Sum(m => m.TotalCost),
+            TotalLaborCost = ((task.ActualTimeMinutes ?? 0) / 60m) * (task.WagePerHour ?? 0m),
             CreatedAt = now
         };
     }

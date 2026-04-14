@@ -29,9 +29,6 @@ public class UpdateMaterialHandler
         if (!string.IsNullOrEmpty(request.Name))
             material.Name = request.Name;
 
-        if (request.Amount.HasValue && request.Amount.Value > 0)
-            material.Amount = request.Amount.Value;
-
         if (!string.IsNullOrEmpty(request.AmountType))
             material.AmountType = request.AmountType;
 
@@ -44,7 +41,6 @@ public class UpdateMaterialHandler
         {
             MaterialId = material.Id,
             Name = material.Name,
-            Amount = material.Amount,
             AmountType = material.AmountType,
             PricePerAmount = material.PricePerAmount,
             CreatedAt = material.CreatedAtUtc

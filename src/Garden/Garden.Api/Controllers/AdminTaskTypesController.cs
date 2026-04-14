@@ -19,7 +19,7 @@ public class AdminTaskTypesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreateTaskTypeRequest request)
+    public async Task<IActionResult> Create([FromBody] CreateTaskTypeRequest request, [FromQuery] Guid? gardenerId = null)
     {
         var taskTypeId = Guid.NewGuid();
         var now = DateTime.UtcNow;
@@ -33,8 +33,16 @@ public class AdminTaskTypesController : ControllerBase
 
         _dbContext.TaskTypes.Add(taskType);
 
-        // Assign to selected gardeners, or all if none specified
-        var targetGardenerIds = request.GardenerIds ?? new List<Guid>();
+        // Assign to selected gardeners.
+        // Backward compatibility: if no GardenerIds in body, accept single gardenerId query param.
+        var targetGardenerIds = request.GardenerIds?.Where(id => id != Guid.Empty).Distinct().ToList() ?? new List<Guid>();
+
+        if (targetGardenerIds.Count == 0 && gardenerId.HasValue && gardenerId.Value != Guid.Empty)
+        {
+            targetGardenerIds.Add(gardenerId.Value);
+        }
+
+        // Fallback to all gardeners only when neither body nor query specifies targets.
         if (targetGardenerIds.Count == 0)
         {
             var allGardeners = await _dbContext.Gardeners
@@ -44,12 +52,12 @@ public class AdminTaskTypesController : ControllerBase
         }
 
         // Create assignments
-        foreach (var gardenerId in targetGardenerIds.Distinct())
+        foreach (var targetGardenerId in targetGardenerIds)
         {
             var assignment = new GardenerTaskTypeRecord
             {
                 Id = Guid.NewGuid(),
-                GardenerId = gardenerId,
+                GardenerId = targetGardenerId,
                 TaskTypeId = taskTypeId
             };
             _dbContext.GardenerTaskTypes.Add(assignment);

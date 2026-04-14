@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "garden-app-api-collection",
     "name": "Garden App API",
-    "description": "Complete API collection for Garden App - Gardener Service Platform",
+    "description": "Complete API collection for Garden App - Gardener Service Platform. Updated with task-material assignment support (multiple materials per task with usedQuantity) and material cost fields in task responses.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -413,6 +413,7 @@
         {
           "name": "Get Job Tasks",
           "request": {
+            "description": "Returns paged tasks for a job. Each task now includes `totalMaterialCost` calculated from assigned materials (sum of usedQuantity * pricePerAmount).",
             "method": "GET",
             "header": [
               {
@@ -440,6 +441,7 @@
         {
           "name": "Create Task in Job",
           "request": {
+            "description": "Creates a task directly under the given job. `materials` is optional. If provided, each item must contain `materialId` and a positive `usedQuantity`. Response includes `materials` and `totalMaterialCost`.",
             "method": "POST",
             "header": [
               {
@@ -453,7 +455,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Trim hedges\",\n  \"description\": \"Trim front and side hedges\",\n  \"estimatedTimeMinutes\": 120\n}"
+              "raw": "{\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Trim hedges\",\n  \"description\": \"Trim front and side hedges\",\n  \"estimatedTimeMinutes\": 120,\n  \"materials\": [\n    {\n      \"materialId\": \"{{material_id}}\",\n      \"usedQuantity\": 1.5\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/gardener/jobs/{{job_id}}/tasks",
@@ -466,10 +468,12 @@
     },
     {
       "name": "Gardener - Tasks",
+      "description": "Task endpoints now support assigning multiple materials and tracking per-task material costs.",
       "item": [
         {
           "name": "Create Task",
           "request": {
+            "description": "Creates a task. `materials` is optional. Use it to assign one or more materials with `usedQuantity`. Response contains `materials` and `totalMaterialCost`.",
             "method": "POST",
             "header": [
               {
@@ -483,7 +487,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"jobId\": \"{{job_id}}\",\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Mow lawn\",\n  \"description\": \"Cut grass to 2cm\",\n  \"estimatedTimeMinutes\": 60\n}"
+              "raw": "{\n  \"jobId\": \"{{job_id}}\",\n  \"taskTypeId\": \"{{task_type_id}}\",\n  \"name\": \"Mow lawn\",\n  \"description\": \"Cut grass to 2cm\",\n  \"estimatedTimeMinutes\": 60,\n  \"materials\": [\n    {\n      \"materialId\": \"{{material_id}}\",\n      \"usedQuantity\": 2\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/gardener/tasks",
@@ -495,6 +499,7 @@
         {
           "name": "Get Task by ID",
           "request": {
+            "description": "Returns full task details. Response now includes `materials` (with name, amountType, usedQuantity, pricePerAmount, totalCost) and `totalMaterialCost`.",
             "method": "GET",
             "header": [
               {
@@ -512,6 +517,7 @@
         {
           "name": "Update Task",
           "request": {
+            "description": "Updates task fields. If `materials` is included, it replaces existing task-material assignments. Each `usedQuantity` must be greater than 0.",
             "method": "PUT",
             "header": [
               {
@@ -525,7 +531,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Task Name\",\n  \"actualTimeMinutes\": 55,\n  \"finishedAt\": \"2025-03-22T14:30:00Z\"\n}"
+              "raw": "{\n  \"name\": \"Updated Task Name\",\n  \"actualTimeMinutes\": 55,\n  \"finishedAt\": \"2025-03-22T14:30:00Z\",\n  \"materials\": [\n    {\n      \"materialId\": \"{{material_id}}\",\n      \"usedQuantity\": 2.25\n    }\n  ]\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/gardener/tasks/{{task_id}}",

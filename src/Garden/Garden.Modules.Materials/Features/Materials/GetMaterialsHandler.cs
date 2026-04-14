@@ -37,10 +37,8 @@ public class GetMaterialsHandler
             {
                 MaterialId = m.Id,
                 Name = m.Name,
-                Amount = m.Amount,
                 AmountType = m.AmountType,
-                PricePerAmount = m.PricePerAmount,
-                TotalPrice = m.Amount * m.PricePerAmount
+                PricePerAmount = m.PricePerAmount
             })
             .ToListAsync();
 
