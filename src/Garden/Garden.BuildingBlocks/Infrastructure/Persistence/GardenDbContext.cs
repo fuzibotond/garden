@@ -21,6 +21,7 @@ public class GardenDbContext : DbContext
     public DbSet<TaskRecord> Tasks => Set<TaskRecord>();
     public DbSet<TaskMaterialRecord> TaskMaterials => Set<TaskMaterialRecord>();
     public DbSet<JobGardenerRecord> JobGardeners => Set<JobGardenerRecord>();
+    public DbSet<TaskScheduleRequestRecord> TaskScheduleRequests => Set<TaskScheduleRequestRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -246,6 +247,30 @@ public class GardenDbContext : DbContext
 
             entity.HasIndex(x => new { x.JobId, x.GardenerId }).IsUnique();
         });
+
+        modelBuilder.Entity<TaskScheduleRequestRecord>(entity =>
+        {
+            entity.ToTable("TaskScheduleRequests");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TaskId).IsRequired();
+            entity.Property(x => x.GardenerId).IsRequired();
+            entity.Property(x => x.ClientId).IsRequired();
+            entity.Property(x => x.ScheduledAtUtc).IsRequired();
+            entity.Property(x => x.Status)
+                .HasConversion<string>()
+                .IsRequired();
+            entity.Property(x => x.ProposedAtUtc).IsRequired(false);
+            entity.Property(x => x.ApprovedAtUtc).IsRequired(false);
+            entity.Property(x => x.DeclinedAtUtc).IsRequired(false);
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => new { x.TaskId, x.ClientId }).IsUnique();
+            entity.HasIndex(x => x.GardenerId);
+            entity.HasIndex(x => x.ClientId);
+            entity.HasIndex(x => x.Status);
+        });
     }
 }
 
@@ -364,4 +389,29 @@ public class JobGardenerRecord
     public Guid Id { get; set; }
     public Guid JobId { get; set; }
     public Guid GardenerId { get; set; }
+}
+
+public class TaskScheduleRequestRecord
+{
+    public Guid Id { get; set; }
+    public Guid TaskId { get; set; }
+    public Guid GardenerId { get; set; }
+    public Guid ClientId { get; set; }
+    public DateTime ScheduledAtUtc { get; set; }
+    public DateTime? ProposedAtUtc { get; set; }
+    public DateTime? ApprovedAtUtc { get; set; }
+    public DateTime? DeclinedAtUtc { get; set; }
+    public TaskScheduleStatus Status { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
+}
+
+public enum TaskScheduleStatus
+{
+    Pending = 0,
+    Approved = 1,
+    Declined = 2,
+    ProposedAlternative = 3,
+    Rescheduled = 4,
+    Cancelled = 5
 }

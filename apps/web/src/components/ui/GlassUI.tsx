@@ -229,7 +229,7 @@ export function GlassSelectContent({ className = "", children, ...props }: Glass
     <Select.Portal>
       <Select.Content
         className={cn(
-          "z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[18px] border border-emerald-200/35",
+          "z-[9999] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-[18px] border border-emerald-200/35",
           "bg-emerald-950/95 shadow-[0_16px_46px_rgba(0,0,0,0.58)] backdrop-blur-xl",
           className,
         )}

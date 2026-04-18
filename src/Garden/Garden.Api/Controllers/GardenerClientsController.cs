@@ -55,4 +55,22 @@ public class GardenerClientsController : ControllerBase
             return Unauthorized(ex.Message);
         }
     }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> Update([FromServices] UpdateGardenerClientHandler handler, Guid id, [FromBody] UpdateGardenerClientRequest request)
+    {
+        try
+        {
+            await handler.Handle(id, request);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return ex.Message.Contains("not found") ? NotFound(ex.Message) : Conflict(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Unauthorized(ex.Message);
+        }
+    }
 }

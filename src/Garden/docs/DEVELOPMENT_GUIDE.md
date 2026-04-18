@@ -15,10 +15,11 @@
 5. [API Endpoints](#api-endpoints)
 6. [Core Workflows](#core-workflows)
 7. [Database Schema](#database-schema)
-8. [Code Patterns](#code-patterns)
-9. [Testing](#testing)
-10. [Deployment](#deployment)
-11. [Troubleshooting](#troubleshooting)
+8. [Database Migrations](#database-migrations)
+9. [Code Patterns](#code-patterns)
+10. [Testing](#testing)
+11. [Deployment](#deployment)
+12. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -374,6 +375,163 @@ CREATE TABLE Gardeners (
 
 ---
 
+## Database Migrations
+
+### Overview
+Garden App uses Entity Framework Core migrations to manage database schema changes. Migrations track all schema modifications and maintain a consistent database state across environments.
+
+### Location
+All migrations are stored in: `Garden.BuildingBlocks/Migrations/`
+
+Each migration consists of two files:
+- `YYYYMMDDHHMMSS_MigrationName.cs` - Migration implementation
+- `YYYYMMDDHHMMSS_MigrationName.Designer.cs` - Migration snapshot
+
+### Creating a Migration
+
+When you modify a model in `GardenDbContext.cs`, you need to create a migration:
+
+```bash
+# Generate migration (run from project root)
+dotnet ef migrations add MigrationName --project Garden.BuildingBlocks
+```
+
+**Example**: Adding a new column
+```bash
+dotnet ef migrations add AddTaskWagePerHour --project Garden.BuildingBlocks
+```
+
+This generates two files in `Garden.BuildingBlocks/Migrations/`.
+
+### Applying Migrations
+
+**Local Development**:
+```bash
+# Apply pending migrations to local database
+dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks
+```
+
+**Production**:
+```bash
+# Same command, against production database
+# Ensure connection string points to production SQL Server
+dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks
+```
+
+### Checking Migration Status
+
+```bash
+# List applied migrations
+SELECT [MigrationId], [ProductVersion] 
+FROM [__EFMigrationsHistory] 
+ORDER BY [MigrationId];
+```
+
+### Rolling Back Migrations
+
+```bash
+# Remove last migration (if not yet applied)
+dotnet ef migrations remove --project Garden.BuildingBlocks
+
+# Revert database to specific migration
+dotnet ef database update PreviousMigrationName --startup-project Garden.Api --project Garden.BuildingBlocks
+```
+
+### Recent Migrations
+
+#### TaskScheduleRequests Table (20260412090000)
+**Purpose**: Support gardener calendar scheduling
+
+**What's Created**:
+- `TaskScheduleRequests` table with columns:
+  - Id, TaskId, GardenerId, ClientId
+  - ScheduledAtUtc, Status, ProposedAtUtc, ApprovedAtUtc, DeclinedAtUtc
+  - CreatedAtUtc, UpdatedAtUtc
+
+**Indexes**:
+- Unique: (TaskId, ClientId)
+- Single: GardenerId, ClientId, Status
+
+**Related Feature**: `GetGardenerCalendarHandler` in Scheduling module
+
+#### Job Closure (20260411160000)
+**Purpose**: Track when jobs are completed
+
+**What's Added**:
+- `ClosedAtUtc` column to Jobs table
+- Allows marking jobs as completed
+
+#### Task Wage Per Hour (20260411130000)
+**Purpose**: Support wage tracking for time entries
+
+**What's Added**:
+- `WagePerHour` column to Tasks table (decimal, nullable)
+- Enables invoicing calculations
+
+### Model Configuration
+
+Models are configured in `GardenDbContext.OnModelCreating()`:
+
+```csharp
+// Example: TaskScheduleRequestRecord configuration
+modelBuilder.Entity<TaskScheduleRequestRecord>(entity =>
+{
+    entity.ToTable("TaskScheduleRequests");
+    entity.HasKey(x => x.Id);
+
+    entity.Property(x => x.Status)
+        .HasMaxLength(50)
+        .IsRequired();
+
+    entity.HasIndex(x => x.GardenerId);
+    entity.HasIndex(x => x.Status);
+});
+```
+
+### Best Practices
+
+✅ **Create descriptive migration names**
+```bash
+# Good
+dotnet ef migrations add AddTaskScheduleRequestsTable
+
+# Avoid
+dotnet ef migrations add Update1
+```
+
+✅ **Apply migrations immediately after creation**
+```bash
+dotnet ef database update
+```
+
+✅ **Review generated migration files before committing**
+- Ensure Up() matches your intent
+- Verify Down() correctly reverts changes
+
+✅ **Keep migrations focused**
+- One logical change per migration
+- Don't mix unrelated schema changes
+
+✅ **Test migrations locally first**
+```bash
+# Test locally, verify no errors
+dotnet ef database update
+
+# Then commit and push
+git add Garden.BuildingBlocks/Migrations/
+git commit -m "[Feature] Add TaskScheduleRequests table"
+```
+
+❌ **Don't manually edit generated migrations**
+- Let EF Core generate the initial version
+- Then customize if needed (rare)
+
+❌ **Don't delete migration files**
+- They track schema history
+- Use `dotnet ef migrations remove` instead
+
+---
+
 ## Code Patterns
 
 ### Module Structure
@@ -511,12 +669,18 @@ Set in `appsettings.json`:
 ```
 
 ### Database Migrations
-```bash
-# Apply migrations
-dotnet ef database update
+For detailed migration information, see [Database Migrations](#database-migrations) section.
 
-# Create migration
-dotnet ef migrations add MigrationName
+Quick reference:
+```bash
+# Apply all pending migrations
+dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks
+
+# Create new migration
+dotnet ef migrations add MigrationName --project Garden.BuildingBlocks
+
+# Check migration status
+SELECT [MigrationId], [ProductVersion] FROM [__EFMigrationsHistory] ORDER BY [MigrationId];
 ```
 
 ### Build & Run
@@ -555,10 +719,37 @@ docker-compose down
 
 ### Issue: Database Errors
 **Solution**:
-- Check connection string
-- Ensure SQL Server is running
-- Run migrations: `dotnet ef database update`
-- Reset database: `dotnet ef database drop --force`
+- Check connection string in `appsettings.json`
+- Ensure SQL Server is running: `sqlcmd -S (local) -U sa`
+- Apply pending migrations: `dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks`
+- Check migration history: `SELECT * FROM [__EFMigrationsHistory]`
+- Reset database if needed: `dotnet ef database drop --force --startup-project Garden.Api --project Garden.BuildingBlocks`
+
+See [Database Migrations](#database-migrations) section for detailed migration workflow.
+
+### Issue: "Invalid object name" SqlException
+**Solution**:
+- **Root Cause**: A migration is defined in the model but not applied to the database
+- **Fix**: Apply pending migrations:
+  ```bash
+  dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks
+  ```
+- **Verify**: Check `__EFMigrationsHistory` table
+  ```sql
+  SELECT [MigrationId], [ProductVersion] 
+  FROM [__EFMigrationsHistory] 
+  ORDER BY [MigrationId];
+  ```
+- **Example**: TaskScheduleRequests table wasn't created because `20260412090000_AddTaskScheduleRequestsTable` migration wasn't applied
+
+### Issue: Model Mismatch
+**Solution**:
+- If model is defined but table doesn't exist, create migration:
+  ```bash
+  dotnet ef migrations add AddMissingTable --project Garden.BuildingBlocks
+  dotnet ef database update --startup-project Garden.Api --project Garden.BuildingBlocks
+  ```
+- If table exists but model doesn't, check if migrations need adjustment
 
 ### Issue: Email Not Sending
 **Solution**:

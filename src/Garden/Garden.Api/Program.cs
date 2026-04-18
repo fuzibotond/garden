@@ -61,6 +61,7 @@ builder.Services.AddNotificationsModule(builder.Configuration);
 builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientsHandler>();
 builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientHandler>();
 builder.Services.AddScoped<Garden.Api.Features.GardenerClients.GetGardenerClientsTotalHandler>();
+builder.Services.AddScoped<Garden.Api.Features.GardenerClients.UpdateGardenerClientHandler>();
 
 // Configure event publishing with RabbitMQ
 var rabbitOptions = builder.Configuration

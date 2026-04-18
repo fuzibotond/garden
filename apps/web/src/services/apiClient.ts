@@ -834,6 +834,27 @@ export function getGardenerJobTasks(token: string, jobId: string, page = 1, page
   }).then((response) => normalizePagedResponse(response, page, pageSize))
 }
 
+/**
+ * Returns all tasks belonging to jobs that are linked to the given clientId.
+ * NOTE: A dedicated backend endpoint GET /api/gardener/tasks?clientId={id} would be
+ * more efficient. This helper works around the missing endpoint by loading all jobs
+ * (up to 200) and fetching tasks per matching job in parallel.
+ */
+export async function getGardenerTasksByClientId(
+  token: string,
+  clientId: string,
+): Promise<TaskDto[]> {
+  const jobsResponse = await getGardenerJobs(token, 1, 200)
+  const clientJobs = jobsResponse.items.filter((j) => j.clientId === clientId)
+  if (clientJobs.length === 0) return []
+  const taskArrays = await Promise.all(
+    clientJobs.map((job) =>
+      getGardenerJobTasks(token, job.jobId, 1, 200).then((r) => r.items),
+    ),
+  )
+  return taskArrays.flat()
+}
+
 export function getClientJobTasks(token: string, jobId: string, page = 1, pageSize = 20) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
   return apiRequest<RawPagedResponse<TaskDto>>(`/api/client/jobs/${jobId}/tasks?${params.toString()}`, {
@@ -1080,6 +1101,130 @@ export function createAdminRelationship(token: string, body: CreateRelationshipR
 export function deleteAdminRelationship(token: string, clientId: string, gardenerId: string) {
   return apiRequest<void>(`/api/admin/relationships/${clientId}/${gardenerId}`, {
     method: "DELETE",
+    token,
+  })
+}
+
+// --- Task Scheduling ---
+export type TaskScheduleStatus = 
+  | "Pending" 
+  | "Approved" 
+  | "Declined" 
+  | "ProposedAlternative" 
+  | "Rescheduled" 
+  | "Cancelled"
+
+export type TaskScheduleDto = {
+  scheduleRequestId: string
+  taskId: string
+  taskName: string
+  jobId: string
+  gardenerId: string
+  gardenerName: string
+  clientId: string
+  clientName: string
+  scheduledAtUtc: string
+  proposedAtUtc?: string
+  approvedAtUtc?: string
+  declinedAtUtc?: string
+  status: TaskScheduleStatus
+  createdAtUtc?: string
+}
+
+export type ScheduleTaskRequest = {
+  taskId: string
+  clientId: string
+  scheduledAtUtc: string
+}
+
+export type ScheduleTaskResponse = {
+  id: string
+  taskId: string
+  gardenerId: string
+  clientId: string
+  scheduledAtUtc: string
+  status: TaskScheduleStatus
+}
+
+export type ApproveScheduleRequest = {
+  scheduleRequestId: string
+}
+
+export type DeclineScheduleRequest = {
+  scheduleRequestId: string
+}
+
+export type ProposeAlternativeTimeRequest = {
+  scheduleRequestId: string
+  proposedAtUtc: string
+}
+
+export type RescheduleTaskRequest = {
+  scheduleRequestId: string
+  rescheduledAtUtc: string
+}
+
+export type ScheduleCalendarResponse = {
+  scheduledTasks: TaskScheduleDto[]
+  totalCount: number
+  page: number
+  pageSize: number
+}
+
+// Gardener Scheduling Endpoints
+export function gardenerScheduleTask(token: string, body: ScheduleTaskRequest) {
+  return apiRequest<ScheduleTaskResponse>("/api/gardener/scheduling/schedule-task", {
+    method: "POST",
+    body,
+    token,
+  })
+}
+
+export function getGardenerSchedulingCalendar(token: string, page = 1, pageSize = 20) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<ScheduleCalendarResponse>(`/api/gardener/scheduling/calendar?${params.toString()}`, {
+    method: "GET",
+    token,
+  })
+}
+
+export function gardenerRescheduleTask(token: string, body: RescheduleTaskRequest) {
+  return apiRequest<void>("/api/gardener/scheduling/reschedule-task", {
+    method: "POST",
+    body,
+    token,
+  })
+}
+
+// Client Scheduling Endpoints
+export function getClientSchedulingCalendar(token: string, page = 1, pageSize = 20) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<ScheduleCalendarResponse>(`/api/client/scheduling/calendar?${params.toString()}`, {
+    method: "GET",
+    token,
+  })
+}
+
+export function clientApproveSchedule(token: string, body: ApproveScheduleRequest) {
+  return apiRequest<void>("/api/client/scheduling/approve-schedule", {
+    method: "POST",
+    body,
+    token,
+  })
+}
+
+export function clientDeclineSchedule(token: string, body: DeclineScheduleRequest) {
+  return apiRequest<void>("/api/client/scheduling/decline-schedule", {
+    method: "POST",
+    body,
+    token,
+  })
+}
+
+export function clientProposeAlternativeTime(token: string, body: ProposeAlternativeTimeRequest) {
+  return apiRequest<void>("/api/client/scheduling/propose-alternative-time", {
+    method: "POST",
+    body,
     token,
   })
 }

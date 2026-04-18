@@ -10,6 +10,8 @@ import ClientsPage from "../../pages/clients/ClientsPage"
 import MaterialsPage from "../../pages/materials/MaterialsPage"
 import ProfilePage from "../../pages/profile/ProfilePage"
 import AcceptInvitationPage from "../../pages/invitations/AcceptInvitationPage"
+import GardenerSchedulingPage from "../../pages/scheduling/GardenerSchedulingPage"
+import ClientSchedulingPage from "../../pages/scheduling/ClientSchedulingPage"
 import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
 import ClientSignup from "../../pages/clients/ClientSignup"
 
@@ -62,6 +64,11 @@ export default function AppRouter() {
 
         <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
           <Route path="/admin/materials" element={<MaterialsPage />} />
+          <Route path="/gardener/scheduling" element={<GardenerSchedulingPage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["Client"]} />}>
+          <Route path="/client/scheduling" element={<ClientSchedulingPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

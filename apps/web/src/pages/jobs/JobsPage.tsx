@@ -9,6 +9,7 @@ import {
   GlassSelectItem,
   GlassSelectTrigger,
   GlassSelectValue,
+  GlassSwitch,
 } from "../../components/ui/GlassUI"
 import AdminLayout from "../../components/layout/AdminLayout"
 import { getAccessToken, getCurrentUser, hasRole } from "../../lib/auth"
@@ -107,6 +108,7 @@ export default function JobsPage() {
   const [deletingJobId, setDeletingJobId] = useState<string | null>(null)
   const [closingJobId, setClosingJobId] = useState<string | null>(null)
   const [downloadingInvoiceJobId, setDownloadingInvoiceJobId] = useState<string | null>(null)
+  const [hideClosedJobs, setHideClosedJobs] = useState(true)
 
   const clientLabelById = useMemo(() => {
     const map = new Map<string, string>()
@@ -345,22 +347,29 @@ export default function JobsPage() {
   return (
     <AdminLayout title="Jobs">
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <p style={{ margin: 0, fontSize: 14 }}>
             {total} job{total !== 1 ? "s" : ""} total
           </p>
-          {canManage && (
-            <GlassButton
-              type="button"
-              onClick={() => {
-                setShowCreate(true)
-                setSubmitError(null)
-              }}
-              size="sm"
-            >
-              Add job
-            </GlassButton>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <GlassSwitch
+              checked={hideClosedJobs}
+              onCheckedChange={setHideClosedJobs}
+              label="Hide closed"
+            />
+            {canManage && (
+              <GlassButton
+                type="button"
+                onClick={() => {
+                  setShowCreate(true)
+                  setSubmitError(null)
+                }}
+                size="sm"
+              >
+                Add job
+              </GlassButton>
+            )}
+          </div>
         </div>
 
         {error && <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{error}</p>}
@@ -368,11 +377,12 @@ export default function JobsPage() {
         <GlassCard variant="elevated" padding="md">
           {loading ? (
             <p>Loading jobs...</p>
-          ) : list.length === 0 ? (
-            <p style={{ margin: 0 }}>No jobs yet. Create one to get started.</p>
+          ) : list.filter(j => !hideClosedJobs || !j.isClosed).length === 0 ? (
+            <p style={{ margin: 0 }}>{list.length === 0 ? "No jobs yet. Create one to get started." : "All jobs are closed. Toggle \"Hide closed\" to view them."}</p>
           ) : (
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                {/* filtered rows */}
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.12)" }}>
                     <th style={{ textAlign: "left", padding: "10px 12px", fontSize: 12, opacity: 0.8 }}>Name</th>
@@ -384,7 +394,7 @@ export default function JobsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {list.map((job) => (
+                  {list.filter(j => !hideClosedJobs || !j.isClosed).map((job) => (
                     <tr key={job.jobId} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                       <td style={{ padding: "10px 12px" }}>
                         <span>{job.name}</span>

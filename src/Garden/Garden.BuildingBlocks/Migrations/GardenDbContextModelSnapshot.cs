@@ -203,8 +203,15 @@ namespace Garden.BuildingBlocks.Migrations
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("InvoiceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -226,10 +233,6 @@ namespace Garden.BuildingBlocks.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("AmountType")
                         .IsRequired()
@@ -266,6 +269,18 @@ namespace Garden.BuildingBlocks.Migrations
 
                     b.Property<Guid>("MaterialId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SnapshotAmountType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SnapshotName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal?>("SnapshotPricePerAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uniqueidentifier");
@@ -321,6 +336,10 @@ namespace Garden.BuildingBlocks.Migrations
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal?>("WagePerHour")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("JobId");
@@ -328,6 +347,56 @@ namespace Garden.BuildingBlocks.Migrations
                     b.HasIndex("TaskTypeId");
 
                     b.ToTable("Tasks", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskScheduleRequestRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeclinedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ProposedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ScheduledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("GardenerId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TaskId", "ClientId")
+                        .IsUnique();
+
+                    b.ToTable("TaskScheduleRequests", (string)null);
                 });
 
             modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskTypeRecord", b =>
