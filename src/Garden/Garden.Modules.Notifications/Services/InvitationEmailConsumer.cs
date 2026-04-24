@@ -1,3 +1,4 @@
+using Garden.BuildingBlocks.Events;
 using Garden.BuildingBlocks.Services;
 using Garden.Modules.Clients.Services;
 using Microsoft.Extensions.Hosting;

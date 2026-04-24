@@ -17,6 +17,10 @@ public class DeleteTaskHandler
         if (task == null)
             return false;
 
+        // Delete associated schedule requests
+        var scheduleRequests = _dbContext.TaskScheduleRequests.Where(tsr => tsr.TaskId == taskId);
+        _dbContext.TaskScheduleRequests.RemoveRange(scheduleRequests);
+
         // Delete associated materials
         var materials = _dbContext.TaskMaterials.Where(tm => tm.TaskId == taskId);
         _dbContext.TaskMaterials.RemoveRange(materials);

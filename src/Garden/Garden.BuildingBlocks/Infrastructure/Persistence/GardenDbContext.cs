@@ -52,6 +52,10 @@ public class GardenDbContext : DbContext
             entity.Property(x => x.LastLogoutUtc)
                 .IsRequired(false);
 
+            entity.Property(x => x.ExpoPushToken)
+                .HasMaxLength(256)
+                .IsRequired(false);
+
             entity.HasIndex(x => x.Email).IsUnique();
         });
 
@@ -123,6 +127,10 @@ public class GardenDbContext : DbContext
                 .IsRequired();
 
             entity.Property(x => x.LastLogoutUtc)
+                .IsRequired(false);
+
+            entity.Property(x => x.ExpoPushToken)
+                .HasMaxLength(256)
                 .IsRequired(false);
 
             entity.HasIndex(x => x.Email).IsUnique();
@@ -283,6 +291,7 @@ public class GardenerRecord
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastLogoutUtc { get; set; }
+    public string? ExpoPushToken { get; set; }
 }
 
 public class ClientRecord
@@ -293,6 +302,7 @@ public class ClientRecord
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
     public DateTime? LastLogoutUtc { get; set; }
+    public string? ExpoPushToken { get; set; }
 }
 
 public class InvitationRecord

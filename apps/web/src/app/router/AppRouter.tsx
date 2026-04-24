@@ -1,19 +1,20 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom"
-import LoginPage from "../../pages/login/LoginPage"
-import DashboardPage from "../../pages/dashboard/DashboardPage"
-import UsersPage from "../../pages/users/UsersPage"
-import GardenersPage from "../../pages/gardeners/GardenersPage"
+import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
 import AdminToolsPage from "../../pages/admin/AdminToolsPage"
-import JobsPage from "../../pages/jobs/JobsPage"
-import TasksPage from "../../pages/tasks/TasksPage"
+import ClientSignup from "../../pages/clients/ClientSignup"
 import ClientsPage from "../../pages/clients/ClientsPage"
+import DashboardPage from "../../pages/dashboard/DashboardPage"
+import GardenersPage from "../../pages/gardeners/GardenersPage"
+import AcceptInvitationPage from "../../pages/invitations/AcceptInvitationPage"
+import JobsPage from "../../pages/jobs/JobsPage"
+import LandingPage from "../../pages/landing/LandingPage"
+import LoginPage from "../../pages/login/LoginPage"
 import MaterialsPage from "../../pages/materials/MaterialsPage"
 import ProfilePage from "../../pages/profile/ProfilePage"
-import AcceptInvitationPage from "../../pages/invitations/AcceptInvitationPage"
-import GardenerSchedulingPage from "../../pages/scheduling/GardenerSchedulingPage"
 import ClientSchedulingPage from "../../pages/scheduling/ClientSchedulingPage"
-import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
-import ClientSignup from "../../pages/clients/ClientSignup"
+import GardenerSchedulingPage from "../../pages/scheduling/GardenerSchedulingPage"
+import TasksPage from "../../pages/tasks/TasksPage"
+import UsersPage from "../../pages/users/UsersPage"
 
 type ProtectedRouteProps = {
   allowedRoles?: Role[]
@@ -40,7 +41,7 @@ export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/invite/accept" element={<AcceptInvitationPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<ClientSignup />} />

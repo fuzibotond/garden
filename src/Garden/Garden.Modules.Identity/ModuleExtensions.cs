@@ -37,6 +37,7 @@ public static class ModuleExtensions
         services.AddScoped<Features.Profile.DeleteGardenerHandler>();
         services.AddScoped<Features.Profile.UpdateMyProfileHandler>();
         services.AddScoped<Features.Auth.LogoutHandler>();
+        services.AddScoped<Features.PushNotifications.RegisterPushTokenHandler>();
         services.AddScoped<Services.IAuthService, Services.AuthService>();
 
         services

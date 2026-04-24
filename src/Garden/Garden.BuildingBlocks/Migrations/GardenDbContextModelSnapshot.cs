@@ -36,6 +36,10 @@ namespace Garden.BuildingBlocks.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("ExpoPushToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<DateTime?>("LastLogoutUtc")
                         .HasColumnType("datetime2");
 
@@ -93,6 +97,10 @@ namespace Garden.BuildingBlocks.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ExpoPushToken")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
@@ -376,8 +384,9 @@ namespace Garden.BuildingBlocks.Migrations
                     b.Property<DateTime>("ScheduledAtUtc")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid>("TaskId")
                         .HasColumnType("uniqueidentifier");

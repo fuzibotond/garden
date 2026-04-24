@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "garden-app-api-collection",
     "name": "Garden App API",
-    "description": "Complete API collection for Garden App - Gardener Service Platform. Updated with task-material assignment support (multiple materials per task with usedQuantity) and material cost fields in task responses.",
+    "description": "Complete API collection for Garden App - Gardener Service Platform. Updated with task-material assignment support (multiple materials per task with usedQuantity), material cost fields in task responses, profile update endpoints, gardener client management, and schedule request workflow with email notifications.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -122,14 +122,16 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Name\"\n}"
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"companyName\": \"Updated Company Name\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/profile",
               "host": ["{{base_url}}"],
               "path": ["auth", "profile"]
-            }
-          }
+            },
+            "description": "Update current user profile. For Client: only 'name' field is used. For Gardener: both 'name' and 'companyName' fields can be updated."
+          },
+          "response": []
         },
         {
           "name": "Delete My Profile",
@@ -213,6 +215,33 @@
               "path": ["api", "gardener", "clients", "total"]
             }
           }
+        },
+        {
+          "name": "Update Client",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Updated Client Name\",\n  \"email\": \"updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/clients/{{client_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "clients", "{{client_id}}"]
+            },
+            "description": "Update client information. Gardener must have access to the client via job or invitation relationship. Email must be unique."
+          },
+          "response": []
         },
         {
           "name": "Invite Client",
@@ -676,6 +705,299 @@
       ]
     },
     {
+      "name": "Gardener - Scheduling",
+      "description": "Schedule request management for gardeners. Create schedule requests which trigger email notifications to clients.",
+      "item": [
+        {
+          "name": "Schedule Task",
+          "request": {
+            "description": "Creates a schedule request for a task. Client receives an email notification with the proposed schedule.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taskId\": \"{{task_id}}\",\n  \"clientId\": \"{{client_id}}\",\n  \"scheduledAtUtc\": \"2025-04-15T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/schedule-task",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "schedule-task"]
+            }
+          }
+        },
+        {
+          "name": "Reschedule Task",
+          "request": {
+            "description": "Updates an existing schedule request with a new time.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleRequestId\": \"{{schedule_request_id}}\",\n  \"newScheduledAtUtc\": \"2025-04-16T14:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/reschedule-task",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "reschedule-task"]
+            }
+          }
+        },
+        {
+          "name": "Get Gardener Calendar",
+          "request": {
+            "description": "Returns all schedule requests for the gardener with pagination.",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/calendar?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "calendar"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Task Schedules",
+          "request": {
+            "description": "Returns schedule requests filtered by status with pagination.",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling?status=Pending&page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Pending",
+                  "description": "Optional. Filter by: Pending, Approved, Declined, ProposedAlternative, Rescheduled, Cancelled"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/{{job_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "{{job_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Job Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/{{job_id}}/tasks?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "{{job_id}}", "tasks"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job Invoice",
+          "request": {
+            "description": "Downloads a PDF invoice for a closed job.",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/scheduling/{{job_id}}/invoice",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "scheduling", "{{job_id}}", "invoice"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Client - Scheduling",
+      "description": "Schedule request management for clients. View, approve, decline, or propose alternative times for schedule requests.",
+      "item": [
+        {
+          "name": "Get Client Calendar",
+          "request": {
+            "description": "Returns all schedule requests for the client with pagination.",
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/client/scheduling/calendar?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client", "scheduling", "calendar"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Schedule",
+          "request": {
+            "description": "Client approves a schedule request from their gardener.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleRequestId\": \"{{schedule_request_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/client/scheduling/approve-schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client", "scheduling", "approve-schedule"]
+            }
+          }
+        },
+        {
+          "name": "Decline Schedule",
+          "request": {
+            "description": "Client declines a schedule request from their gardener.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleRequestId\": \"{{schedule_request_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/client/scheduling/decline-schedule",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client", "scheduling", "decline-schedule"]
+            }
+          }
+        },
+        {
+          "name": "Propose Alternative Time",
+          "request": {
+            "description": "Client proposes an alternative time for a schedule request.",
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduleRequestId\": \"{{schedule_request_id}}\",\n  \"proposedAtUtc\": \"2025-04-17T09:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/client/scheduling/propose-alternative-time",
+              "host": ["{{base_url}}"],
+              "path": ["api", "client", "scheduling", "propose-alternative-time"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Admin - Clients",
       "item": [
         {
@@ -1034,6 +1356,11 @@
     },
     {
       "key": "invitation_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schedule_request_id",
       "value": "",
       "type": "string"
     }

@@ -1,4 +1,6 @@
+using Garden.BuildingBlocks.Events;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,11 +10,13 @@ public class ScheduleTaskHandler
 {
     private readonly GardenDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
+    private readonly IEventPublisher _eventPublisher;
 
-    public ScheduleTaskHandler(GardenDbContext dbContext, ICurrentUser currentUser)
+    public ScheduleTaskHandler(GardenDbContext dbContext, ICurrentUser currentUser, IEventPublisher eventPublisher)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
+        _eventPublisher = eventPublisher;
     }
 
     public async Task<ScheduleTaskResponse> Handle(ScheduleTaskRequest request)
@@ -39,6 +43,11 @@ public class ScheduleTaskHandler
         var client = await _dbContext.Clients.FirstOrDefaultAsync(c => c.Id == request.ClientId);
         if (client == null)
             throw new KeyNotFoundException("Client not found.");
+
+        // Get gardener details for notification
+        var gardener = await _dbContext.Gardeners.FirstOrDefaultAsync(g => g.Id == gardenerId);
+        if (gardener == null)
+            throw new KeyNotFoundException("Gardener not found.");
 
         // Verify gardener has relationship with this client
         var gardenerClientRelationship = await _dbContext.GardenerClients
@@ -70,6 +79,22 @@ public class ScheduleTaskHandler
 
         _dbContext.TaskScheduleRequests.Add(scheduleRequest);
         await _dbContext.SaveChangesAsync();
+
+        // Publish event for notification
+        var @event = new ScheduleRequestCreatedEvent
+        {
+            ScheduleRequestId = scheduleRequest.Id,
+            TaskId = task.Id,
+            GardenerId = gardenerId,
+            ClientId = client.Id,
+            ClientEmail = client.Email,
+            ClientName = client.Name,
+            GardenerName = gardener.Name ?? gardener.CompanyName,
+            TaskName = task.Name,
+            ScheduledAtUtc = scheduleRequest.ScheduledAtUtc
+        };
+
+        await _eventPublisher.PublishAsync(@event);
 
         return new ScheduleTaskResponse
         {
