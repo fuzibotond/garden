@@ -1,50 +1,117 @@
-# Welcome to your Expo app 👋
+# Garden Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## Description
 
-## Get started
+The Garden mobile app connects gardeners and their clients. Gardeners manage jobs, tasks, and scheduling; clients review and respond to appointment requests. The app delivers real-time push notifications when schedule statuses change and falls back to 30-second polling while open.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **Expo ~54** — React Native framework
+- **React 19** with React Compiler
+- **React Native 0.81.5**
+- **TypeScript ~5.9**
+- **expo-router ~6** — file-based navigation
+- **expo-notifications** — local + Expo push notifications
+- **expo-secure-store** — secure JWT storage
+- **@react-native-community/datetimepicker** — native date/time picker
+- **fetch API** — HTTP client (no third-party library)
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## Getting Started
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Prerequisites
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+- Node.js 20+
+- [Expo Go](https://expo.dev/go) installed on your physical device (iOS or Android)
+- Backend running (see `src/Garden`) and accessible from your device
 
-## Get a fresh project
-
-When you're ready, run:
+### Install dependencies
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Configure the API URL
 
-## Learn more
+Create a `.env` file in this folder:
 
-To learn more about developing your project with Expo, look at the following resources:
+```
+EXPO_PUBLIC_API_URL=https://your-ngrok-url.ngrok-free.app
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Use [ngrok](https://ngrok.com) to expose the local backend to your physical device:
 
-## Join the community
+```bash
+ngrok http 5055
+```
 
-Join our community of developers creating universal apps.
+> For Android emulator, no `.env` is needed — the app defaults to `http://10.0.2.2:5055`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## Running the Project
+
+```bash
+# Start Metro bundler (opens QR code for Expo Go)
+npm start
+
+# Android emulator
+npm run android
+
+# iOS simulator
+npm run ios
+
+# Web
+npm run web
+```
+
+Scan the QR code with Expo Go on a physical device. Push notifications only work on physical devices.
+
+---
+
+## Project Structure
+
+```
+app/              # Screens and navigation (expo-router file-based routing)
+  (client)/       # Client-role tabs: home, jobs, schedule, profile
+  (gardener)/     # Gardener-role tabs: home, jobs, tasks, clients, schedule, profile
+  _layout.tsx     # Root layout — auth provider + notification setup
+  index.tsx       # Auth guard — redirects by role
+  login.tsx       # Login screen
+components/       # Reusable UI components
+context/          # AuthContext — token, profile, role, signIn, signOut
+hooks/            # Custom hooks (notifications, color scheme)
+services/         # api.ts (all API calls), storage.ts (token persistence)
+constants/        # api.ts (base URL), theme.ts (GardenColors design tokens)
+docs/             # Project documentation
+```
+
+---
+
+## Architecture
+
+**Modular Monolith** — single Expo app with role-based route groups:
+
+- `/(client)` — Client screens
+- `/(gardener)` — Gardener screens
+- Auth state managed by `AuthContext` (Context API, no Redux)
+- Service layer in `services/api.ts` centralises all HTTP calls
+- Two-layer notifications: Expo push (background) + polling local notifications (foreground)
+
+See [docs/architecture.md](docs/architecture.md) for full details.
+
+---
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [docs/architecture.md](docs/architecture.md) | Folder structure, navigation, auth flow, design system, environment config |
+| [docs/scheduling.md](docs/scheduling.md) | Scheduling workflow, status transitions, modals, API endpoints |
+| [docs/notifications.md](docs/notifications.md) | Push notifications, polling, deduplication, badge counts |
+| [docs/api.md](docs/api.md) | Full API reference — all functions, types, request/response shapes |
+| [docs/ai-rule.md](docs/ai-rule.md) | AI development rules (naming, no duplication, versioning) |
+
