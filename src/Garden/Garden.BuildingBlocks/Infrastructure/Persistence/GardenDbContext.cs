@@ -22,6 +22,10 @@ public class GardenDbContext : DbContext
     public DbSet<TaskMaterialRecord> TaskMaterials => Set<TaskMaterialRecord>();
     public DbSet<JobGardenerRecord> JobGardeners => Set<JobGardenerRecord>();
     public DbSet<TaskScheduleRequestRecord> TaskScheduleRequests => Set<TaskScheduleRequestRecord>();
+    public DbSet<TaskQuestionRecord> TaskQuestions => Set<TaskQuestionRecord>();
+    public DbSet<TaskAnswerRecord> TaskAnswers => Set<TaskAnswerRecord>();
+    public DbSet<TaskQuestionMediaRecord> TaskQuestionMedia => Set<TaskQuestionMediaRecord>();
+    public DbSet<TaskAnswerMediaRecord> TaskAnswerMedia => Set<TaskAnswerMediaRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -279,6 +283,86 @@ public class GardenDbContext : DbContext
             entity.HasIndex(x => x.ClientId);
             entity.HasIndex(x => x.Status);
         });
+
+        modelBuilder.Entity<TaskQuestionRecord>(entity =>
+        {
+            entity.ToTable("TaskQuestions");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.TaskId).IsRequired();
+            entity.Property(x => x.GardenerId).IsRequired();
+            entity.Property(x => x.ClientId).IsRequired();
+            entity.Property(x => x.QuestionText)
+                .HasMaxLength(2048)
+                .IsRequired();
+            entity.Property(x => x.QuestionType)
+                .HasConversion<string>()
+                .IsRequired();
+            entity.Property(x => x.PredefinedOptions)
+                .HasMaxLength(4096)
+                .IsRequired(false);
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.TaskId);
+            entity.HasIndex(x => x.GardenerId);
+            entity.HasIndex(x => x.ClientId);
+        });
+
+        modelBuilder.Entity<TaskAnswerRecord>(entity =>
+        {
+            entity.ToTable("TaskAnswers");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.QuestionId).IsRequired();
+            entity.Property(x => x.ClientId).IsRequired();
+            entity.Property(x => x.AnswerText)
+                .HasMaxLength(2048)
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.QuestionId);
+            entity.HasIndex(x => x.ClientId);
+        });
+
+        modelBuilder.Entity<TaskQuestionMediaRecord>(entity =>
+        {
+            entity.ToTable("TaskQuestionMedia");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.QuestionId).IsRequired();
+            entity.Property(x => x.MediaUrl)
+                .HasMaxLength(2048)
+                .IsRequired();
+            entity.Property(x => x.MediaType)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(x => x.FileName)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(x => x.UploadedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.QuestionId);
+        });
+
+        modelBuilder.Entity<TaskAnswerMediaRecord>(entity =>
+        {
+            entity.ToTable("TaskAnswerMedia");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.AnswerId).IsRequired();
+            entity.Property(x => x.MediaUrl)
+                .HasMaxLength(2048)
+                .IsRequired();
+            entity.Property(x => x.MediaType)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(x => x.FileName)
+                .HasMaxLength(256)
+                .IsRequired();
+            entity.Property(x => x.UploadedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.AnswerId);
+        });
     }
 }
 
@@ -424,4 +508,51 @@ public enum TaskScheduleStatus
     ProposedAlternative = 3,
     Rescheduled = 4,
     Cancelled = 5
+}
+
+public class TaskQuestionRecord
+{
+    public Guid Id { get; set; }
+    public Guid TaskId { get; set; }
+    public Guid GardenerId { get; set; }
+    public Guid ClientId { get; set; }
+    public string QuestionText { get; set; } = default!;
+    public TaskQuestionType QuestionType { get; set; }
+    public string? PredefinedOptions { get; set; }
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+public enum TaskQuestionType
+{
+    FreeText = 0,
+    MultipleChoice = 1
+}
+
+public class TaskAnswerRecord
+{
+    public Guid Id { get; set; }
+    public Guid QuestionId { get; set; }
+    public Guid ClientId { get; set; }
+    public string AnswerText { get; set; } = default!;
+    public DateTime CreatedAtUtc { get; set; }
+}
+
+public class TaskQuestionMediaRecord
+{
+    public Guid Id { get; set; }
+    public Guid QuestionId { get; set; }
+    public string MediaUrl { get; set; } = default!;
+    public string MediaType { get; set; } = default!;
+    public string FileName { get; set; } = default!;
+    public DateTime UploadedAtUtc { get; set; }
+}
+
+public class TaskAnswerMediaRecord
+{
+    public Guid Id { get; set; }
+    public Guid AnswerId { get; set; }
+    public string MediaUrl { get; set; } = default!;
+    public string MediaType { get; set; } = default!;
+    public string FileName { get; set; } = default!;
+    public DateTime UploadedAtUtc { get; set; }
 }

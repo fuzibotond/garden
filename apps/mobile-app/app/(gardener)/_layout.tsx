@@ -100,6 +100,10 @@ export default function GardenerLayout() {
         }}
       />
       <Tabs.Screen
+        name="questions"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

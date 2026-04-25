@@ -2,7 +2,7 @@
 
 ## Description
 
-The Garden mobile app connects gardeners and their clients. Gardeners manage jobs, tasks, and scheduling; clients review and respond to appointment requests. The app delivers real-time push notifications when schedule statuses change and falls back to 30-second polling while open.
+The Garden mobile app connects gardeners and their clients. Gardeners manage jobs, tasks, and scheduling; clients review and respond to appointment requests. The app delivers real-time push notifications when schedule statuses change and falls back to 30-second polling while open. Closed jobs generate invoices that both gardeners and clients can download and view.
 
 ---
 

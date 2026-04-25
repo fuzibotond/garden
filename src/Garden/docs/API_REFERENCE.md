@@ -1,7 +1,19 @@
 # API Reference
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Last Updated**: 2026-04-24
+
+---
+
+## Change Log
+
+### [1.1] - 2026-04-24
+- Added Task Questions endpoints for gardener-client communication
+- Added Task Answers endpoints for client responses
+- Added media upload endpoints for questions and answers
+
+### [1.0] - 2026-04-24
+- Initial API reference documentation
 
 ---
 
@@ -17,7 +29,8 @@
 8. [Tasks](#tasks)
 9. [Jobs](#jobs)
 10. [Schedule Requests](#schedule-requests)
-11. [Push Notifications](#push-notifications)
+11. [Task Questions](#task-questions)
+12. [Push Notifications](#push-notifications)
 
 ---
 
@@ -1009,6 +1022,199 @@ Role: Gardener
 
 ---
 
+## Task Questions
+
+Task Questions enable gardeners to ask clients questions about specific tasks with optional media attachments. Questions can be multiple choice or free text.
+
+### Create Question (Gardener)
+
+**POST** `/api/tasks/{taskId}/questions`
+
+Gardener creates a question for the client related to a specific task.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Role: Gardener
+```
+
+**Request:**
+```json
+{
+  "questionText": "Which fertilizer would you prefer?",
+  "questionType": 1,
+  "predefinedOptions": ["Organic", "Chemical", "Mixed"]
+}
+```
+
+**Question Types:**
+- `0` = FreeText
+- `1` = MultipleChoice
+
+**Response:** `201 Created`
+```json
+{
+  "questionId": "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "taskId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "questionText": "Which fertilizer would you prefer?",
+  "questionType": 1,
+  "predefinedOptions": ["Organic", "Chemical", "Mixed"],
+  "createdAt": "2026-04-24T10:00:00Z"
+}
+```
+
+---
+
+### Get Questions by Task
+
+**GET** `/api/tasks/{taskId}/questions`
+
+Get all questions and answers for a specific task. Accessible by both gardener and client.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Role: Gardener | Client
+```
+
+**Response:** `200 OK`
+```json
+{
+  "questions": [
+    {
+      "questionId": "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "taskId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "gardenerId": "1fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "questionText": "Which fertilizer would you prefer?",
+      "questionType": 1,
+      "predefinedOptions": ["Organic", "Chemical", "Mixed"],
+      "createdAt": "2026-04-24T10:00:00Z",
+      "answers": [
+        {
+          "answerId": "8fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "clientId": "2fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "answerText": "Organic",
+          "createdAt": "2026-04-24T10:30:00Z",
+          "media": []
+        }
+      ],
+      "media": [
+        {
+          "mediaId": "9fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "mediaUrl": "https://storage.example.com/fertilizer.jpg",
+          "mediaType": "image/jpeg",
+          "fileName": "fertilizer.jpg",
+          "uploadedAt": "2026-04-24T10:00:00Z"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### Upload Question Media (Gardener)
+
+**POST** `/api/questions/{questionId}/media`
+
+Upload photo or video attachment to a question.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Role: Gardener
+```
+
+**Request:**
+```json
+{
+  "mediaUrl": "https://storage.example.com/photo.jpg",
+  "mediaType": "image/jpeg",
+  "fileName": "photo.jpg"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "mediaId": "9fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "questionId": "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "mediaUrl": "https://storage.example.com/photo.jpg",
+  "mediaType": "image/jpeg",
+  "fileName": "photo.jpg",
+  "uploadedAt": "2026-04-24T10:00:00Z"
+}
+```
+
+---
+
+### Create Answer (Client)
+
+**POST** `/api/questions/{questionId}/answers`
+
+Client answers a gardener's question.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Role: Client
+```
+
+**Request:**
+```json
+{
+  "answerText": "Organic"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "answerId": "8fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "questionId": "7fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "answerText": "Organic",
+  "createdAt": "2026-04-24T10:30:00Z"
+}
+```
+
+---
+
+### Upload Answer Media (Client)
+
+**POST** `/api/answers/{answerId}/media`
+
+Upload photo or video attachment to an answer.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Role: Client
+```
+
+**Request:**
+```json
+{
+  "mediaUrl": "https://storage.example.com/answer-photo.jpg",
+  "mediaType": "image/jpeg",
+  "fileName": "answer-photo.jpg"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "mediaId": "afa85f64-5717-4562-b3fc-2c963f66afa6",
+  "answerId": "8fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "mediaUrl": "https://storage.example.com/answer-photo.jpg",
+  "mediaType": "image/jpeg",
+  "fileName": "answer-photo.jpg",
+  "uploadedAt": "2026-04-24T10:30:00Z"
+}
+```
+
+---
+
 ## Push Notifications
 
 Expo Push Notifications integration for mobile apps.
@@ -1020,6 +1226,8 @@ Expo Push Notifications integration for mobile apps.
 3. **Schedule Approved** → Gardener receives push notification
 4. **Schedule Declined** → Gardener receives push notification
 5. **Schedule Proposed Alternative** → Gardener receives push notification
+6. **Question Created** → Client receives push notification
+7. **Question Answered** → Gardener receives push notification
 
 ### Notification Format
 

@@ -1,3 +1,4 @@
+import InvoiceViewer from '@/components/invoice-viewer';
 import { GardenColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -30,6 +31,11 @@ export default function GardenerJobs() {
   const [saving, setSaving] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Invoice state
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [invoiceJobId, setInvoiceJobId] = useState<string | null>(null);
+  const [invoiceNumber, setInvoiceNumber] = useState<string | undefined>(undefined);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -67,6 +73,12 @@ export default function GardenerJobs() {
     setEditingJob(job);
     setJobName(job.name);
     setShowModal(true);
+  }
+
+  function openInvoice(jobId: string, invoiceNum?: string) {
+    setInvoiceJobId(jobId);
+    setInvoiceNumber(invoiceNum);
+    setShowInvoice(true);
   }
 
   async function handleSave() {
@@ -228,6 +240,11 @@ export default function GardenerJobs() {
                       <View style={styles.actionRow}>
                         <Text style={styles.tapHint}>View tasks</Text>
                         <View style={styles.actions}>
+                          {isClosed && (
+                            <TouchableOpacity style={styles.actionBtn} onPress={() => openInvoice(job.jobId, job.jobId)}>
+                              <Text style={styles.actionInvoice}>Invoice</Text>
+                            </TouchableOpacity>
+                          )}
                           <TouchableOpacity style={styles.actionBtn} onPress={() => openEdit(job)}>
                             <Text style={styles.actionEdit}>Edit</Text>
                           </TouchableOpacity>
@@ -306,6 +323,18 @@ export default function GardenerJobs() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Invoice Viewer */}
+      {invoiceJobId && token && (
+        <InvoiceViewer
+          visible={showInvoice}
+          jobId={invoiceJobId}
+          invoiceNumber={invoiceNumber}
+          token={token}
+          isGardener
+          onClose={() => setShowInvoice(false)}
+        />
+      )}
     </View>
   );
 }
@@ -364,6 +393,7 @@ const styles = StyleSheet.create({
   },
   actionEdit: { fontSize: 12, color: GardenColors.textPrimary, fontWeight: '500' },
   actionDelete: { fontSize: 12, color: GardenColors.error, fontWeight: '500' },
+  actionInvoice: { fontSize: 12, color: GardenColors.accent, fontWeight: '500' },
   actionBtnDanger: { borderColor: 'rgba(239, 68, 68, 0.4)', backgroundColor: 'rgba(239, 68, 68, 0.08)' },
   confirmRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
   confirmText: { fontSize: 12, color: GardenColors.error },

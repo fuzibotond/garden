@@ -134,7 +134,7 @@ tests/
 | **Clients** | Client management, invitation flow |
 | **Catalog** | Global task types available to all gardeners |
 | **Materials** | Gardener-specific materials with pricing |
-| **Tasks** | Task creation, updates, material tracking |
+| **Tasks** | Task creation, updates, material tracking, questions & answers |
 | **Scheduling** | Jobs, task schedule requests (propose/approve/decline/reschedule) |
 | **Notifications** | Email and push notifications via RabbitMQ consumers |
 
@@ -160,6 +160,8 @@ tests/
 - **Task**: Individual work item requested by client
 - **Job**: Container for multiple tasks with client relationship
 - **TaskScheduleRequest**: Scheduling negotiation between gardener and client
+- **TaskQuestion**: Question asked by gardener to client about a task
+- **TaskAnswer**: Client's response to a gardener's question
 - **Invitation**: Email-based client onboarding flow
 
 **Key Relationships:**
@@ -170,6 +172,7 @@ tests/
 - Job → Tasks (one-to-many)
 - Task → Materials (many-to-many via TaskMaterials with snapshots)
 - Task ↔ Client + Gardener (TaskScheduleRequest for scheduling)
+- Task → Questions → Answers (Q&A workflow for task clarifications with media support)
 
 ## Documentation
 
@@ -199,9 +202,11 @@ The API uses JWT Bearer token authentication. Three roles are supported:
 | `/api/admin/*` | Admin-only operations |
 | `/api/materials/*` | Material management |
 | `/api/task-types/*` | Task type catalog |
-| `/api/tasks/*` | Task management |
+| `/api/tasks/*` | Task management and questions |
 | `/api/jobs/*` | Job management |
 | `/api/schedule/*` | Schedule request management |
+| `/api/questions/*` | Question and answer management |
+| `/api/answers/*` | Answer media uploads |
 
 See [API_REFERENCE.md](docs/API_REFERENCE.md) for complete endpoint documentation.
 

@@ -1,7 +1,19 @@
 # Developer Guide
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Last Updated**: 2026-04-24
+
+---
+
+## Change Log
+
+### [1.1] - 2026-04-24
+- Added Task Questions and Answers feature implementation example
+- Added RabbitMQ event consumer patterns for questions
+- Updated best practices for event-driven features
+
+### [1.0] - 2026-04-24
+- Initial developer guide
 
 ---
 

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "garden-app-api-collection",
     "name": "Garden App API",
-    "description": "Complete API collection for Garden App - Gardener Service Platform. Updated with task-material assignment support (multiple materials per task with usedQuantity), material cost fields in task responses, profile update endpoints, gardener client management, and schedule request workflow with email notifications.",
+    "description": "Complete API collection for Garden App - Gardener Service Platform. Updated with task-material assignment support (multiple materials per task with usedQuantity), material cost fields in task responses, profile update endpoints, gardener client management, schedule request workflow with email notifications, and task questions and answers feature with media support.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -583,6 +583,153 @@
               "raw": "{{base_url}}/api/gardener/tasks/{{task_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "gardener", "tasks", "{{task_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Task Questions & Answers",
+      "item": [
+        {
+          "name": "Create Question (Gardener)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"Which fertilizer would you prefer?\",\n  \"questionType\": 1,\n  \"predefinedOptions\": [\"Organic\", \"Chemical\", \"Mixed\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{task_id}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tasks", "{{task_id}}", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Create Free Text Question (Gardener)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionText\": \"What time works best for you this week?\",\n  \"questionType\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{task_id}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tasks", "{{task_id}}", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Get Questions by Task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tasks/{{task_id}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tasks", "{{task_id}}", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Upload Question Media (Gardener)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mediaUrl\": \"https://storage.example.com/fertilizer.jpg\",\n  \"mediaType\": \"image/jpeg\",\n  \"fileName\": \"fertilizer.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/{{question_id}}/media",
+              "host": ["{{base_url}}"],
+              "path": ["api", "questions", "{{question_id}}", "media"]
+            }
+          }
+        },
+        {
+          "name": "Create Answer (Client)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answerText\": \"Organic\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/questions/{{question_id}}/answers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "questions", "{{question_id}}", "answers"]
+            }
+          }
+        },
+        {
+          "name": "Upload Answer Media (Client)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mediaUrl\": \"https://storage.example.com/answer-photo.jpg\",\n  \"mediaType\": \"image/jpeg\",\n  \"fileName\": \"answer-photo.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/answers/{{answer_id}}/media",
+              "host": ["{{base_url}}"],
+              "path": ["api", "answers", "{{answer_id}}", "media"]
             }
           }
         }
@@ -1361,6 +1508,16 @@
     },
     {
       "key": "schedule_request_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "question_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "answer_id",
       "value": "",
       "type": "string"
     }

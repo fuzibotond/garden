@@ -15,6 +15,8 @@ import ClientSchedulingPage from "../../pages/scheduling/ClientSchedulingPage"
 import GardenerSchedulingPage from "../../pages/scheduling/GardenerSchedulingPage"
 import TasksPage from "../../pages/tasks/TasksPage"
 import UsersPage from "../../pages/users/UsersPage"
+import GardenerQuestionsPage from "../../pages/questions/GardenerQuestionsPage"
+import ClientQuestionsPage from "../../pages/questions/ClientQuestionsPage"
 
 type ProtectedRouteProps = {
   allowedRoles?: Role[]
@@ -66,10 +68,12 @@ export default function AppRouter() {
         <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
           <Route path="/admin/materials" element={<MaterialsPage />} />
           <Route path="/gardener/scheduling" element={<GardenerSchedulingPage />} />
+          <Route path="/gardener/questions" element={<GardenerQuestionsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["Client"]} />}>
           <Route path="/client/scheduling" element={<ClientSchedulingPage />} />
+          <Route path="/client/questions" element={<ClientQuestionsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

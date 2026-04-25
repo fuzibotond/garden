@@ -71,6 +71,20 @@ var rabbitOptions = builder.Configuration
 builder.Services.AddSingleton(rabbitOptions);
 builder.Services.AddSingleton<IEventPublisher, RabbitMqEventPublisher>();
 
+// Configure Blob Storage Service
+if (builder.Environment.IsProduction() && !string.IsNullOrEmpty(builder.Configuration["Azure:BlobStorage:ConnectionString"]))
+{
+    // Use Azure Blob Storage in production
+    var blobConnectionString = builder.Configuration["Azure:BlobStorage:ConnectionString"];
+    builder.Services.AddSingleton(sp => new Azure.Storage.Blobs.BlobServiceClient(blobConnectionString));
+    builder.Services.AddSingleton<IBlobStorageService, AzureBlobStorageService>();
+}
+else
+{
+    // Use local file storage in development
+    var baseUrl = builder.Configuration["FileStorage:BaseUrl"] ?? "http://localhost:5000/uploads";
+    builder.Services.AddSingleton<IBlobStorageService>(sp => new LocalFileStorageService(baseUrl: baseUrl));
+}
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -124,6 +138,17 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
+
+    // Ensure uploads directory exists before configuring static files
+    var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+    Directory.CreateDirectory(uploadsPath);
+
+    // Enable static files in development for local file storage
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+        RequestPath = "/uploads"
+    });
 }
 
 app.UseHttpsRedirection();

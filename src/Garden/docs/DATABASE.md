@@ -1,7 +1,21 @@
 # Database Schema
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Last Updated**: 2026-04-24
+
+---
+
+## Change Log
+
+### [1.1] - 2026-04-24
+- Added TaskQuestions table for gardener questions
+- Added TaskAnswers table for client responses
+- Added TaskQuestionMedia table for question attachments
+- Added TaskAnswerMedia table for answer attachments
+- Added support for multiple choice and free text questions
+
+### [1.0] - 2026-04-24
+- Initial database schema documentation
 
 ---
 
@@ -24,11 +38,25 @@
        └───────────▶│TaskMaterials │◀──────────────────│   Tasks    │
                     └──────────────┘                   └────────────┘
                                                               │
-                                                           1:1│
-                                                              ▼
-                                                    ┌────────────────────┐
-                                                    │TaskScheduleRequest │
-                                                    └────────────────────┘
+                                            ┌─────────────────┼─────────────────┐
+                                         1:1│              1:N│              1:N│
+                                            ▼                 ▼                 ▼
+                                  ┌──────────────────┐ ┌──────────────┐ ┌──────────────┐
+                                  │TaskScheduleReq   │ │TaskQuestions │ │               │
+                                  └──────────────────┘ └──────────────┘ │               │
+                                                              │           │               │
+                                                           1:N│           │               │
+                                                              ▼           │               │
+                                                       ┌──────────────┐  │               │
+                                                       │ TaskAnswers  │  │               │
+                                                       └──────────────┘  │               │
+                                                              │           │               │
+                                            ┌─────────────────┼───────────┘               │
+                                         1:N│              1:N│                           │
+                                            ▼                 ▼                           │
+                                  ┌──────────────────┐ ┌──────────────────┐             │
+                                  │TaskQuestionMedia │ │ TaskAnswerMedia  │             │
+                                  └──────────────────┘ └──────────────────┘             │
 ```
 
 ---
@@ -290,6 +318,85 @@ Scheduling negotiation between gardener and client.
 
 ---
 
+### TaskQuestions
+
+Questions asked by gardeners to clients regarding specific tasks.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | GUID | PK | Unique identifier |
+| `TaskId` | GUID | FK, NOT NULL | Related task |
+| `GardenerId` | GUID | FK, NOT NULL | Gardener who asked |
+| `ClientId` | GUID | FK, NOT NULL | Client to answer |
+| `QuestionText` | VARCHAR(2048) | NOT NULL | Question content |
+| `QuestionType` | STRING | NOT NULL | Question type (enum) |
+| `PredefinedOptions` | VARCHAR(4096) | NULL | JSON array of options |
+| `CreatedAtUtc` | DATETIME | NOT NULL | Question created |
+
+**Enums:**
+- `QuestionType`: `FreeText(0)`, `MultipleChoice(1)`
+
+**Indexes:**
+- `IX_TaskQuestions_TaskId`
+- `IX_TaskQuestions_GardenerId`
+- `IX_TaskQuestions_ClientId`
+
+---
+
+### TaskAnswers
+
+Answers provided by clients to gardener questions.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | GUID | PK | Unique identifier |
+| `QuestionId` | GUID | FK, NOT NULL | Related question |
+| `ClientId` | GUID | FK, NOT NULL | Client who answered |
+| `AnswerText` | VARCHAR(2048) | NOT NULL | Answer content |
+| `CreatedAtUtc` | DATETIME | NOT NULL | Answer created |
+
+**Indexes:**
+- `IX_TaskAnswers_QuestionId`
+- `IX_TaskAnswers_ClientId`
+
+---
+
+### TaskQuestionMedia
+
+Media attachments for questions (photos/videos).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | GUID | PK | Unique identifier |
+| `QuestionId` | GUID | FK, NOT NULL | Related question |
+| `MediaUrl` | VARCHAR(2048) | NOT NULL | Media URL/path |
+| `MediaType` | VARCHAR(50) | NOT NULL | MIME type |
+| `FileName` | VARCHAR(256) | NOT NULL | Original filename |
+| `UploadedAtUtc` | DATETIME | NOT NULL | Upload timestamp |
+
+**Indexes:**
+- `IX_TaskQuestionMedia_QuestionId`
+
+---
+
+### TaskAnswerMedia
+
+Media attachments for answers (photos/videos).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | GUID | PK | Unique identifier |
+| `AnswerId` | GUID | FK, NOT NULL | Related answer |
+| `MediaUrl` | VARCHAR(2048) | NOT NULL | Media URL/path |
+| `MediaType` | VARCHAR(50) | NOT NULL | MIME type |
+| `FileName` | VARCHAR(256) | NOT NULL | Original filename |
+| `UploadedAtUtc` | DATETIME | NOT NULL | Upload timestamp |
+
+**Indexes:**
+- `IX_TaskAnswerMedia_AnswerId`
+
+---
+
 ## Migrations
 
 ### Migration History
@@ -302,6 +409,7 @@ Scheduling negotiation between gardener and client.
 | `20260411160000_AddJobClosedAt` | 2026-04-11 | Added job completion tracking |
 | `20260412090000_AddTaskScheduleRequestsTable` | 2026-04-12 | Added schedule request workflow |
 | `20260413090000_AddExpoPushTokens` | 2026-04-13 | Added push notification tokens |
+| `20260424000000_AddTaskQuestionsAndAnswers` | 2026-04-24 | Added question-answer feature for gardener-client communication |
 
 ### Running Migrations
 

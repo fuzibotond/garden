@@ -89,6 +89,10 @@ export default function ClientLayout() {
         }}
       />
       <Tabs.Screen
+        name="questions"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

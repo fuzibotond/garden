@@ -37,6 +37,9 @@ function NotificationSetup() {
       if (data?.type === 'schedule_request' || data?.type === 'schedule_update') {
         if (role === 'Client') router.push('/(client)/schedule');
         else if (role === 'Gardener') router.push('/(gardener)/schedule');
+      } else if (data?.type === 'question' || data?.type === 'answer') {
+        if (role === 'Client') router.push('/(client)/jobs');
+        else if (role === 'Gardener') router.push('/(gardener)/tasks');
       }
     });
 

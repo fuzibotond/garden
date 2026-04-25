@@ -1,4 +1,8 @@
-import { getClientCalendar, getGardenerCalendar, registerPushToken } from '@/services/api';
+import {
+    getClientCalendar,
+    getGardenerCalendar,
+    registerPushToken,
+} from '@/services/api';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -26,8 +30,13 @@ Notifications.setNotificationHandler({
   }),
 });
 
+function isExpoGoAndroid(): boolean {
+  return Platform.OS === 'android' && Constants.appOwnership === 'expo';
+}
+
 export async function requestNotificationPermission(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
+  if (isExpoGoAndroid()) return false;
   if (!Device.isDevice) {
     // Simulators can show local notifications, but push tokens won't work —
     // local notifications are fine for our use-case
@@ -46,7 +55,18 @@ export async function requestNotificationPermission(): Promise<boolean> {
  * Safe to call multiple times — silently no-ops if the device doesn't support it.
  */
 export async function registerExpoPushToken(authToken: string): Promise<void> {
-  if (Platform.OS === 'web' || !Device.isDevice) return;
+  if (Platform.OS === 'web') return;
+  if (isExpoGoAndroid()) {
+    if (__DEV__) {
+      console.warn('[PushToken] Android remote push is not supported in Expo Go. Use a development build for push testing.');
+    }
+    return;
+  }
+
+  if (!Device.isDevice) {
+    if (__DEV__) console.warn('[PushToken] Not a physical device — push tokens are unavailable on simulators');
+    return;
+  }
 
   try {
     const granted = await requestNotificationPermission();
@@ -84,8 +104,8 @@ function useScheduleNotifications(
 
     try {
       if (role === 'Client') {
-        const res = await getClientCalendar(token, 1, 100);
-        const items = res.scheduledTasks ?? [];
+        const calRes = await getClientCalendar(token, 1, 100);
+        const items = calRes.scheduledTasks ?? [];
 
         const newPending = items.filter(
           (i) => i.status === 'Pending' && !seenKeys.has(key(i.scheduleRequestId, i.status)),
@@ -99,8 +119,8 @@ function useScheduleNotifications(
           );
         }
       } else if (role === 'Gardener') {
-        const res = await getGardenerCalendar(token, 1, 100);
-        const items = res.scheduledTasks ?? [];
+        const calRes = await getGardenerCalendar(token, 1, 100);
+        const items = calRes.scheduledTasks ?? [];
 
         for (const item of items) {
           const k = key(item.scheduleRequestId, item.status);
@@ -134,13 +154,13 @@ function useScheduleNotifications(
     if (!token || !role || role === 'Admin') return;
     try {
       if (role === 'Client') {
-        const res = await getClientCalendar(token, 1, 100);
-        (res.scheduledTasks ?? []).forEach((i) => {
+        const calRes = await getClientCalendar(token, 1, 100);
+        (calRes.scheduledTasks ?? []).forEach((i) => {
           seenKeys.add(key(i.scheduleRequestId, i.status));
         });
       } else if (role === 'Gardener') {
-        const res = await getGardenerCalendar(token, 1, 100);
-        (res.scheduledTasks ?? []).forEach((i) => {
+        const calRes = await getGardenerCalendar(token, 1, 100);
+        (calRes.scheduledTasks ?? []).forEach((i) => {
           seenKeys.add(key(i.scheduleRequestId, i.status));
         });
       }

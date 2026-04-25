@@ -22,6 +22,10 @@ public static class ModuleExtensions
         services.AddHostedService<ScheduleRequestEmailConsumer>();
         services.AddHostedService<ScheduleStatusChangedConsumer>();
 
+        // Register background consumers for question notifications
+        services.AddHostedService<TaskQuestionCreatedConsumer>();
+        services.AddHostedService<TaskQuestionAnsweredConsumer>();
+
         return services;
     }
 }

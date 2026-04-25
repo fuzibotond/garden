@@ -1105,6 +1105,156 @@ export function deleteAdminRelationship(token: string, clientId: string, gardene
   })
 }
 
+// --- Task Q&A ---
+
+export type QuestionType = "FreeText" | "MultipleChoice"
+export type QuestionStatus = "Pending" | "Answered"
+
+export type QuestionOptionDto = {
+  optionId: string
+  text: string
+}
+
+export type QuestionAnswerDto = {
+  answerId: string
+  questionId: string
+  text: string
+  answeredAt: string
+  answeredByName?: string
+  mediaUrls?: string[]
+}
+
+export type TaskQuestionDto = {
+  questionId: string
+  taskId: string
+  taskName?: string
+  text: string
+  type: QuestionType
+  options?: QuestionOptionDto[]
+  status: QuestionStatus
+  createdAt: string
+  askedByName?: string
+  mediaUrls?: string[]
+  answer?: QuestionAnswerDto
+}
+
+export type CreateQuestionRequest = {
+  text: string
+  type: QuestionType
+  options?: string[]
+}
+
+type RawQuestionMedia = {
+  mediaId: string
+  mediaUrl: string
+  mediaType: string
+  fileName: string
+}
+
+type RawQuestionAnswerDto = {
+  answerId: string
+  clientId?: string
+  answerText: string
+  createdAt: string
+  media?: RawQuestionMedia[]
+}
+
+type RawTaskQuestionDto = {
+  questionId: string
+  taskId: string
+  questionText: string
+  questionType: 0 | 1 | "FreeText" | "MultipleChoice"
+  predefinedOptions?: string[] | null
+  createdAt: string
+  answers?: RawQuestionAnswerDto[]
+  media?: RawQuestionMedia[]
+}
+
+function normalizeQuestion(raw: RawTaskQuestionDto): TaskQuestionDto {
+  const firstAnswer = raw.answers?.[0]
+  const toAbsoluteUrl = (url: string) => {
+    try {
+      const parsed = new URL(url)
+      if (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1") {
+        // Strip localhost origin so the path is served via the current origin
+        // (Vite dev proxy forwards /uploads/* to the backend)
+        return parsed.pathname + parsed.search
+      }
+    } catch {
+      // not a valid URL — return as-is
+    }
+    return url
+  }
+
+  const isMultipleChoice = raw.questionType === 1 || raw.questionType === "MultipleChoice"
+  return {
+    questionId: raw.questionId,
+    taskId: raw.taskId,
+    text: raw.questionText,
+    type: isMultipleChoice ? "MultipleChoice" : "FreeText",
+    options: raw.predefinedOptions?.map((opt, i) => ({ optionId: String(i), text: opt })),
+    status: (raw.answers?.length ?? 0) > 0 ? "Answered" : "Pending",
+    createdAt: raw.createdAt,
+    mediaUrls: raw.media?.map((m) => toAbsoluteUrl(m.mediaUrl)).filter(Boolean),
+    answer: firstAnswer
+      ? {
+          answerId: firstAnswer.answerId,
+          questionId: raw.questionId,
+          text: firstAnswer.answerText,
+          answeredAt: firstAnswer.createdAt,
+          mediaUrls: firstAnswer.media?.map((m) => toAbsoluteUrl(m.mediaUrl)).filter(Boolean),
+        }
+      : undefined,
+  }
+}
+
+export function getTaskQuestions(token: string, taskId: string): Promise<PagedResponse<TaskQuestionDto>> {
+  return apiRequest<{ questions: RawTaskQuestionDto[] }>(`/api/tasks/${taskId}/questions`, {
+    method: "GET",
+    token,
+  }).then((response) => {
+    const items = (response?.questions ?? []).map(normalizeQuestion)
+    return { items, total: items.length, page: 1, pageSize: items.length }
+  })
+}
+
+export function createGardenerQuestion(token: string, taskId: string, body: CreateQuestionRequest) {
+  return apiRequest<RawTaskQuestionDto>(`/api/tasks/${taskId}/questions`, {
+    method: "POST",
+    body: {
+      questionText: body.text,
+      questionType: body.type === "MultipleChoice" ? 1 : 0,
+      predefinedOptions: body.options,
+    },
+    token,
+  })
+    .catch((err) => {
+      const msg = err instanceof Error ? err.message.toLowerCase() : ""
+      const isEnumError =
+        msg.includes("questiontype") && (msg.includes("could not be converted") || msg.includes("json value"))
+      if (!isEnumError) throw err
+      // Some backend environments accept string enum values
+      return apiRequest<RawTaskQuestionDto>(`/api/tasks/${taskId}/questions`, {
+        method: "POST",
+        body: {
+          questionText: body.text,
+          questionType: body.type,
+          predefinedOptions: body.options,
+        },
+        token,
+      })
+    })
+    .then((raw) => normalizeQuestion({ ...raw, answers: raw.answers ?? [] }))
+}
+
+export function answerClientQuestion(token: string, questionId: string, answerText: string) {
+  return apiRequest<void>(`/api/questions/${questionId}/answers`, {
+    method: "POST",
+    body: { answerText },
+    token,
+  })
+}
+
 // --- Task Scheduling ---
 export type TaskScheduleStatus = 
   | "Pending" 

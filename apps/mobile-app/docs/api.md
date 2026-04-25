@@ -1,9 +1,18 @@
 # API Reference
 
 **Project:** Garden Mobile App  
-**Version:** 1.0.0  
-**Last Updated:** 2026-04-24  
+**Version:** 1.2.0  
+**Last Updated:** 2026-04-25  
 **Status:** Active
+
+---
+
+## Change Log
+
+### v1.2.0 (2026-04-25)
+- Added invoice creation/download endpoints: `getGardenerJobInvoice()` and `getClientJobInvoice()`
+- Added `InvoiceViewer` component for displaying and downloading PDFs in mobile app
+- Invoices are only available for closed jobs
 
 ---
 
@@ -422,6 +431,40 @@ Returns: Paged<TaskDto>
 
 ---
 
+## Invoice
+
+### `getGardenerJobInvoice(token, jobId)`
+
+Downloads the PDF invoice for a closed job (gardener view).
+
+```
+GET /api/gardener/jobs/{jobId}/invoice
+Auth: Bearer token
+Returns: string (base64-encoded PDF data)
+```
+
+**Notes:**
+- Only available for closed jobs
+- Returns the invoice as base64-encoded PDF data
+- Used by `InvoiceViewer` component to download and display PDFs
+
+### `getClientJobInvoice(token, jobId)`
+
+Downloads the PDF invoice for a closed job (client view).
+
+```
+GET /api/client/jobs/{jobId}/invoice
+Auth: Bearer token
+Returns: string (base64-encoded PDF data)
+```
+
+**Notes:**
+- Only available for closed jobs
+- Returns the invoice as base64-encoded PDF data
+- Used by `InvoiceViewer` component to download and display PDFs
+
+---
+
 ## Client: Scheduling
 
 ### `getClientCalendar(token, page?, pageSize?)`
@@ -461,6 +504,150 @@ Returns: TaskScheduleDto
 
 ---
 
+## Q&A Types
+
+### QuestionType / QuestionStatus
+
+```typescript
+type QuestionType = 'MultipleChoice' | 'FreeText'
+type QuestionStatus = 'Pending' | 'Answered'
+```
+
+### QuestionOptionDto
+
+```typescript
+type QuestionOptionDto = {
+  optionId: string
+  text: string
+}
+```
+
+### QuestionAnswerDto
+
+```typescript
+type QuestionAnswerDto = {
+  answerId: string
+  questionId: string
+  text: string
+  selectedOptionId?: string
+  answeredAt: string
+  answeredByName?: string
+  mediaUrls?: string[]
+}
+```
+
+### TaskQuestionDto
+
+```typescript
+type TaskQuestionDto = {
+  questionId: string
+  taskId: string
+  taskName?: string
+  jobId?: string
+  text: string
+  type: QuestionType
+  options?: QuestionOptionDto[]
+  status: QuestionStatus
+  createdAt: string
+  askedByName?: string
+  answer?: QuestionAnswerDto
+  mediaUrls?: string[]
+}
+```
+
+### CreateQuestionRequest
+
+```typescript
+type CreateQuestionRequest = {
+  taskId: string
+  text: string
+  type: QuestionType
+  options?: string[]      // option texts for MultipleChoice
+  mediaUrls?: string[]
+}
+```
+
+### AnswerQuestionRequest
+
+```typescript
+type AnswerQuestionRequest = {
+  text: string
+  selectedOptionId?: string
+  mediaUrls?: string[]
+}
+```
+
+---
+
+## Media Upload
+
+### `uploadMedia(token, uri, mimeType, filename)`
+
+```
+POST /api/media/upload
+Auth: Bearer token
+Body: multipart/form-data — field "file"
+Returns: { url: string }
+```
+
+Uploads a photo or video picked from the device library. Returns the hosted URL to embed in `mediaUrls` fields of questions or answers.
+
+---
+
+## Gardener: Questions
+
+### `getGardenerQuestions(token, taskId?, page?, pageSize?)`
+
+```
+GET /api/gardener/questions?taskId=&page=&pageSize=
+Auth: Bearer token
+Returns: Paged<TaskQuestionDto>
+```
+
+Omit `taskId` to fetch questions for all tasks.
+
+### `createGardenerQuestion(token, body)`
+
+```
+POST /api/gardener/questions
+Auth: Bearer token
+Body: CreateQuestionRequest
+Returns: TaskQuestionDto
+```
+
+### `deleteGardenerQuestion(token, questionId)`
+
+```
+DELETE /api/gardener/questions/{questionId}
+Auth: Bearer token
+Returns: void
+```
+
+Only unanswered questions can be deleted.
+
+---
+
+## Client: Questions
+
+### `getClientQuestions(token, taskId?, page?, pageSize?)`
+
+```
+GET /api/client/questions?taskId=&page=&pageSize=
+Auth: Bearer token
+Returns: Paged<TaskQuestionDto>
+```
+
+### `answerQuestion(token, questionId, body)`
+
+```
+POST /api/client/questions/{questionId}/answer
+Auth: Bearer token
+Body: AnswerQuestionRequest
+Returns: TaskQuestionDto
+```
+
+---
+
 ## Data Normalisation
 
 The API response shapes vary across endpoints. Two internal helpers standardise them before returning to callers:
@@ -491,6 +678,12 @@ Handles pagination envelope variance:
 ---
 
 ## Change Log
+
+### [1.1.0] - 2026-04-24
+- Added Q&A types: `QuestionType`, `QuestionStatus`, `QuestionOptionDto`, `QuestionAnswerDto`, `TaskQuestionDto`, `CreateQuestionRequest`, `AnswerQuestionRequest`
+- Added `uploadMedia()` for multipart photo/video upload
+- Added `getGardenerQuestions()`, `createGardenerQuestion()`, `deleteGardenerQuestion()`
+- Added `getClientQuestions()`, `answerQuestion()`
 
 ### [1.0.0] - 2026-04-24
 - Initial API reference documentation

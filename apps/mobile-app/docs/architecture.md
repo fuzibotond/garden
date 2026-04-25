@@ -41,18 +41,20 @@ mobile-app/
 │   ├── login.tsx               # Email + password login screen
 │   ├── modal.tsx               # Generic modal shell (currently unused)
 │   ├── (client)/               # Client-role route group (tab navigator)
-│   │   ├── _layout.tsx         # Client tabs + pending badge count
+│   │   ├── _layout.tsx         # Client tabs + pending badge + question badge count
 │   │   ├── index.tsx           # Home dashboard
 │   │   ├── jobs.tsx            # Jobs list
 │   │   ├── schedule.tsx        # Schedule calendar + Approve/Decline/Propose modals
+│   │   ├── questions.tsx       # Task Q&A — answer questions, view history
 │   │   └── profile.tsx         # User profile
 │   ├── (gardener)/             # Gardener-role route group (tab navigator)
-│   │   ├── _layout.tsx         # Gardener tabs + proposal badge count
+│   │   ├── _layout.tsx         # Gardener tabs + proposal badge + question badge count
 │   │   ├── index.tsx           # Home dashboard
 │   │   ├── jobs.tsx            # Jobs list
 │   │   ├── tasks.tsx           # Tasks list + Create/Schedule/Edit modals
 │   │   ├── schedule.tsx        # Schedule calendar + Reschedule modal
 │   │   ├── clients.tsx         # Client list
+│   │   ├── questions.tsx       # Task Q&A — ask questions, view history
 │   │   └── profile.tsx         # User profile
 │   └── (tabs)/                 # Unused template tabs (Expo scaffold)
 ├── components/                 # Reusable UI components
@@ -69,7 +71,7 @@ mobile-app/
 ├── context/
 │   └── AuthContext.tsx         # Auth state: token, profile, role, signIn, signOut
 ├── hooks/
-│   ├── use-schedule-notifications.ts       # Polling + local notifications + push token
+│   ├── use-schedule-notifications.ts       # Polling + local notifications + push token (schedule + Q&A)
 │   ├── use-schedule-notifications.web.ts   # Web stub (no-op)
 │   ├── use-color-scheme.ts
 │   ├── use-color-scheme.web.ts
@@ -160,6 +162,7 @@ The following terms have fixed meanings throughout the codebase and must never b
 | **Task** | A unit of work created by a gardener, belonging to a job |
 | **Job** | A project container owned by a client, assigned to a gardener |
 | **Schedule Request** | An appointment proposal from a gardener to a client for a specific task |
+| **Question** | A query created by a gardener, linked to a task, answered by the client |
 
 ---
 
@@ -176,6 +179,7 @@ The following terms have fixed meanings throughout the codebase and must never b
 | expo-secure-store | ^55.0.13 | Secure token storage |
 | expo-device | ~8.0.10 | Device detection (push token guard) |
 | expo-constants | ~18.0.13 | Access `app.json` extras (EAS projectId) |
+| expo-image-picker | ~16.0.6 | Photo/video selection for Q&A media attachments |
 | @react-native-community/datetimepicker | 8.4.4 | Native date/time picker in modals |
 | @react-navigation/bottom-tabs | ^7.4.0 | Tab navigator |
 
@@ -229,6 +233,13 @@ The EAS project ID is stored in `app.json` under `extra.eas.projectId` and is re
 ---
 
 ## Change Log
+
+### [1.1.0] - 2026-04-24
+- Added Task Q&A feature: `(gardener)/questions.tsx`, `(client)/questions.tsx`
+- Added Q&A types and API functions to `services/api.ts`
+- Extended notification polling in `use-schedule-notifications.ts` for Q&A events
+- Added `expo-image-picker` dependency for media attachments
+- Added Questions tab with badge to both role layouts
 
 ### [1.0.0] - 2026-04-24
 - Initial architecture documentation

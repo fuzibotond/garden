@@ -1,5 +1,23 @@
 import { API_BASE_URL } from '@/constants/api';
 
+/**
+ * The backend stores media URLs with the local base URL (e.g. http://localhost:5000).
+ * In development with ngrok, the phone cannot reach localhost, so we rewrite any
+ * localhost origin to the current API_BASE_URL so images load on physical devices.
+ */
+function rewriteMediaUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      const apiOrigin = new URL(API_BASE_URL).origin;
+      return url.replace(parsed.origin, apiOrigin);
+    }
+  } catch {
+    // not a valid URL — return as-is
+  }
+  return url;
+}
+
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
 async function request<T>(
@@ -21,10 +39,30 @@ async function request<T>(
 
   if (!res.ok) {
     const text = await res.text().catch(() => 'Request failed')
+    // HTML response means the tunnel is down, URL has changed, or the server is not running
+    if (text.trimStart().startsWith('<')) {
+      throw new Error(`Server unreachable (HTTP ${res.status}). Check that the backend is running and the tunnel URL is current.`)
+    }
     let message = text
     try {
-      const json = JSON.parse(text) as { message?: string }
-      if (json.message) message = json.message
+      const json = JSON.parse(text) as {
+        message?: string
+        title?: string
+        errors?: Record<string, unknown>
+      }
+      if (json.errors) {
+        const details = Object.entries(json.errors)
+          .map(([k, v]) => {
+            if (Array.isArray(v)) return `${k}: ${v.map((x) => String(x)).join(', ')}`
+            return `${k}: ${String(v)}`
+          })
+          .join('; ')
+        message = json.title ? `${json.title} — ${details}` : details
+      } else if (json.title) {
+        message = json.title
+      } else if (json.message) {
+        message = json.message
+      }
     } catch {
       // use raw text
     }
@@ -34,7 +72,15 @@ async function request<T>(
   if (res.status === 204) return undefined as T
   const text = await res.text()
   if (!text) return undefined as T
-  return JSON.parse(text) as T
+  // HTML response on a success status also means the tunnel served the wrong page
+  if (text.trimStart().startsWith('<')) {
+    throw new Error('Server returned an HTML page instead of JSON. Check that the backend is running and the tunnel URL is current.')
+  }
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return text as T
+  }
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -271,6 +317,53 @@ export const getClientJobTasks = (token: string, jobId: string, page = 1, pageSi
   request<RawPaged<TaskDto>>(`/api/client/jobs/${jobId}/tasks?page=${page}&pageSize=${pageSize}`, { token })
     .then((r) => normalizePaged(r, page, pageSize))
 
+// ─── Invoice ───────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch invoice PDF as a blob for gardener
+ * Returns the PDF data as a base64 string that can be displayed in a PDF viewer
+ */
+async function requestBinary(path: string, token: string): Promise<string> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  }
+  if (API_BASE_URL.includes('ngrok')) {
+    headers['ngrok-skip-browser-warning'] = 'true'
+  }
+
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    method: 'GET',
+    headers,
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => 'Request failed')
+    if (text.trimStart().startsWith('<')) {
+      throw new Error(`Server unreachable (HTTP ${res.status}). Check that the backend is running and the tunnel URL is current.`)
+    }
+    throw new Error(text || 'Failed to download invoice')
+  }
+
+  const blob = await res.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Extract base64 part (remove "data:application/pdf;base64," prefix if present)
+      const base64 = result.includes(',') ? result.split(',')[1] : result
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
+export const getGardenerJobInvoice = (token: string, jobId: string): Promise<string> =>
+  requestBinary(`/api/gardener/jobs/${jobId}/invoice`, token)
+
+export const getClientJobInvoice = (token: string, jobId: string): Promise<string> =>
+  requestBinary(`/api/client/jobs/${jobId}/invoice`, token)
+
 // ─── Scheduling Types ──────────────────────────────────────────────────────────
 
 export type ScheduleStatus = 'Pending' | 'Approved' | 'Declined' | 'ProposedAlternative' | 'Rescheduled'
@@ -350,5 +443,182 @@ export const proposeAlternativeTime = (token: string, scheduleRequestId: string,
   request<ScheduleTaskResponse>('/api/client/scheduling/propose-alternative-time', {
     method: 'POST',
     body: { scheduleRequestId, proposedAtUtc },
+    token,
+  })
+
+// ─── Q&A Types ────────────────────────────────────────────────────────────────
+
+export type QuestionType = 'MultipleChoice' | 'FreeText'
+export type QuestionStatus = 'Pending' | 'Answered'
+
+export type QuestionOptionDto = {
+  optionId: string
+  text: string
+}
+
+export type QuestionAnswerDto = {
+  answerId: string
+  questionId: string
+  text: string
+  selectedOptionId?: string
+  answeredAt: string
+  answeredByName?: string
+  mediaUrls?: string[]
+}
+
+export type TaskQuestionDto = {
+  questionId: string
+  taskId: string
+  taskName?: string
+  jobId?: string
+  text: string
+  type: QuestionType
+  options?: QuestionOptionDto[]
+  status: QuestionStatus
+  createdAt: string
+  askedByName?: string
+  answer?: QuestionAnswerDto
+  mediaUrls?: string[]
+}
+
+export type CreateQuestionRequest = {
+  taskId: string
+  text: string
+  type: QuestionType
+  options?: string[]
+}
+
+export type AnswerQuestionRequest = {
+  text: string
+}
+
+// ─── Q&A Media Registration ──────────────────────────────────────────────────
+
+export const addQuestionMedia = (
+  token: string,
+  questionId: string,
+  mediaUrl: string,
+  mediaType: string,
+  fileName: string,
+) =>
+  request<void>(`/api/questions/${questionId}/media`, {
+    method: 'POST',
+    body: { questionId, mediaUrl, mediaType, fileName },
+    token,
+  })
+
+export const addAnswerMedia = (
+  token: string,
+  answerId: string,
+  mediaUrl: string,
+  mediaType: string,
+  fileName: string,
+) =>
+  request<void>(`/api/answers/${answerId}/media`, {
+    method: 'POST',
+    body: { answerId, mediaUrl, mediaType, fileName },
+    token,
+  })
+
+// ─── Questions ────────────────────────────────────────────────────────────────
+
+type RawQuestionMedia = {
+  mediaId: string
+  mediaUrl: string
+  mediaType: string
+  fileName: string
+  uploadedAt: string
+}
+
+type RawAnswerDto = {
+  answerId: string
+  clientId?: string
+  answerText: string
+  createdAt: string
+  media: RawQuestionMedia[]
+}
+
+type RawQuestion = {
+  questionId: string
+  taskId: string
+  gardenerId?: string
+  questionText: string
+  questionType: 0 | 1 | 'FreeText' | 'MultipleChoice'
+  predefinedOptions?: string[] | null
+  createdAt: string
+  answers: RawAnswerDto[]
+  media: RawQuestionMedia[]
+}
+
+function normalizeQuestion(raw: RawQuestion): TaskQuestionDto {
+  const firstAnswer = raw.answers?.[0]
+  const isMultipleChoice = raw.questionType === 1 || raw.questionType === 'MultipleChoice'
+  return {
+    questionId: raw.questionId,
+    taskId: raw.taskId,
+    text: raw.questionText,
+    type: isMultipleChoice ? 'MultipleChoice' : 'FreeText',
+    options: raw.predefinedOptions?.map((opt, i) => ({ optionId: String(i), text: opt })),
+    status: (raw.answers?.length ?? 0) > 0 ? 'Answered' : 'Pending',
+    createdAt: raw.createdAt,
+    mediaUrls: raw.media?.map((m) => rewriteMediaUrl(m.mediaUrl)),
+    answer: firstAnswer
+      ? {
+          answerId: firstAnswer.answerId,
+          questionId: raw.questionId,
+          text: firstAnswer.answerText,
+          answeredAt: firstAnswer.createdAt,
+          mediaUrls: firstAnswer.media?.map((m) => rewriteMediaUrl(m.mediaUrl)),
+        }
+      : undefined,
+  }
+}
+
+export const getTaskQuestions = (token: string, taskId: string) =>
+  request<{ questions: RawQuestion[] }>(`/api/tasks/${taskId}/questions`, { token })
+    .then((r) => ({ items: r.questions.map(normalizeQuestion) }))
+
+export const createGardenerQuestion = (token: string, body: CreateQuestionRequest) =>
+  request<RawQuestion>(`/api/tasks/${body.taskId}/questions`, {
+    method: 'POST',
+    body: {
+      questionText: body.text,
+      questionType: body.type === 'MultipleChoice' ? 1 : 0,
+      predefinedOptions: body.options,
+    },
+    token,
+  })
+    .catch((err) => {
+      const message = err instanceof Error ? err.message.toLowerCase() : ''
+      const isEnumConversionError =
+        message.includes('questiontype') &&
+        (message.includes('could not be converted') || message.includes('json value'))
+
+      if (!isEnumConversionError) throw err
+
+      // Backend enum binding may be configured for string values in some environments.
+      return request<RawQuestion>(`/api/tasks/${body.taskId}/questions`, {
+        method: 'POST',
+        body: {
+          questionText: body.text,
+          questionType: body.type,
+          predefinedOptions: body.options,
+        },
+        token,
+      })
+    })
+    .then((raw) => normalizeQuestion({ ...raw, answers: raw.answers ?? [], media: raw.media ?? [] }))
+
+export type CreateAnswerResult = {
+  answerId: string
+  questionId: string
+  answerText: string
+  createdAt: string
+}
+
+export const answerQuestion = (token: string, questionId: string, body: AnswerQuestionRequest) =>
+  request<CreateAnswerResult>(`/api/questions/${questionId}/answers`, {
+    method: 'POST',
+    body: { answerText: body.text },
     token,
   })

@@ -1,16 +1,24 @@
 import { GardenColors } from '@/constants/theme';
 import { useAuth } from '@/context/AuthContext';
 import {
-    createTask, deleteGardenerTask, getGardenerJobById, getGardenerJobs, getGardenerJobTasks, getGardenerMaterials, getGardenerTaskById, getGardenerTaskTypes,
-    scheduleTask, updateGardenerTask, type JobDto, type MaterialDto, type TaskDto, type TaskTypeDto,
+    addQuestionMedia,
+    createGardenerQuestion,
+    createTask, deleteGardenerTask, getGardenerJobById, getGardenerJobs, getGardenerJobTasks, getGardenerMaterials,
+    getGardenerTaskById, getGardenerTaskTypes,
+    getTaskQuestions,
+    scheduleTask, updateGardenerTask, type JobDto, type MaterialDto, type QuestionType, type TaskDto, type TaskQuestionDto, type TaskTypeDto,
 } from '@/services/api';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator, Alert, Modal, Platform, RefreshControl, ScrollView,
+    ActivityIndicator, Alert, Dimensions, Image, Modal, Platform, RefreshControl, ScrollView,
     StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
+
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 
 type TaskWithJob = TaskDto & { jobName: string };
 
@@ -62,6 +70,21 @@ export default function GardenerTasks() {
   const [editEst, setEditEst] = useState('');
   const [editMaterials, setEditMaterials] = useState<{ materialId: string; usedQuantity: string }[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // Task Q&A state
+  const [questionsTask, setQuestionsTask] = useState<TaskWithJob | null>(null);
+  const [taskQuestions, setTaskQuestions] = useState<TaskQuestionDto[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [showQuestionsModal, setShowQuestionsModal] = useState(false);
+  const [creatingNewQuestion, setCreatingNewQuestion] = useState(false);
+  const [questionText, setQuestionText] = useState('');
+  const [questionType, setQuestionType] = useState<QuestionType>('FreeText');
+  const [questionOptions, setQuestionOptions] = useState<string[]>(['', '']);
+  const [questionMedia, setQuestionMedia] = useState<{ mediaUrl: string; mimeType: string; filename: string }[]>([]);
+  const [creatingQuestion, setCreatingQuestion] = useState(false);
+
+  // Lightbox for question/answer images
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -303,6 +326,111 @@ export default function GardenerTasks() {
     }
   }
 
+  async function openQuestionsModal(task: TaskWithJob) {
+    setQuestionsTask(task);
+    setTaskQuestions([]);
+    setShowQuestionsModal(true);
+    setQuestionsLoading(true);
+    try {
+      if (!token) return;
+      const res = await getTaskQuestions(token, task.taskId);
+      setTaskQuestions(res.items);
+    } catch {
+      // non-critical
+    } finally {
+      setQuestionsLoading(false);
+    }
+  }
+
+  function openCreateQuestion() {
+    setQuestionText('');
+    setQuestionType('FreeText');
+    setQuestionOptions(['', '']);
+    setQuestionMedia([]);
+    setCreatingNewQuestion(true);
+  }
+
+  async function pickQuestionMedia() {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission required', 'Please allow media library access.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsMultipleSelection: true,
+      quality: 0.6,
+      base64: true,
+    });
+
+    if (result.canceled) return;
+
+    const picked = result.assets
+      .map((a, idx) => {
+        if (!a.base64) return null;
+        // expo-image-picker transcodes HEIC to JPEG bytes when base64:true, but
+        // may still report mimeType as image/heic — normalise to jpeg so the
+        // backend stores a renderable file extension.
+        const rawMime = a.mimeType ?? 'image/jpeg';
+        const mimeType = rawMime === 'image/heic' || rawMime === 'image/heif' ? 'image/jpeg' : rawMime;
+        const rawName = a.fileName ?? `image-${Date.now()}-${idx}.jpg`;
+        const filename = (rawMime === 'image/heic' || rawMime === 'image/heif')
+          ? rawName.replace(/\.heic$/i, '.jpg').replace(/\.heif$/i, '.jpg')
+          : rawName;
+        return {
+          mediaUrl: `data:${mimeType};base64,${a.base64}`,
+          mimeType,
+          filename,
+        };
+      })
+      .filter((m): m is { mediaUrl: string; mimeType: string; filename: string } => !!m);
+
+    if (picked.length === 0) {
+      Alert.alert('Could not attach image', 'Selected image could not be read. Please try another one.');
+      return;
+    }
+
+    setQuestionMedia((prev) => [...prev, ...picked]);
+  }
+
+  async function handleCreateQuestion() {
+    if (!token || !questionsTask || !questionText.trim()) {
+      Alert.alert('Missing info', 'Please enter a question.');
+      return;
+    }
+    const validOptions = questionOptions.filter((o) => o.trim().length > 0);
+    if (questionType === 'MultipleChoice' && validOptions.length < 2) {
+      Alert.alert('Missing info', 'Add at least 2 options for a multiple choice question.');
+      return;
+    }
+    setCreatingQuestion(true);
+    try {
+      const created = await createGardenerQuestion(token, {
+        taskId: questionsTask.taskId,
+        text: questionText.trim(),
+        type: questionType,
+        options: questionType === 'MultipleChoice' ? validOptions : undefined,
+      });
+
+      if (questionMedia.length > 0) {
+        await Promise.all(
+          questionMedia.map((m) =>
+            addQuestionMedia(token, created.questionId, m.mediaUrl, m.mimeType, m.filename),
+          ),
+        );
+      }
+
+      const refreshed = await getTaskQuestions(token, questionsTask.taskId);
+      setTaskQuestions(refreshed.items);
+      setCreatingNewQuestion(false);
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to create question');
+    } finally {
+      setCreatingQuestion(false);
+    }
+  }
+
   function toggleMaterial(materialId: string) {
     setSelectedMaterials((prev) =>
       prev.find((m) => m.materialId === materialId)
@@ -358,7 +486,7 @@ export default function GardenerTasks() {
               <Text style={styles.sectionTitle}>⚙️ In Progress ({inProgress.length})</Text>
               <View style={styles.list}>
                 {inProgress.map((t) => (
-                  <TaskCard key={t.taskId} task={t} onFinish={handleFinish} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} onSchedule={openScheduleModal} />
+                  <TaskCard key={t.taskId} task={t} onFinish={handleFinish} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} onSchedule={openScheduleModal} onOpenQuestions={openQuestionsModal} />
                 ))}
               </View>
             </>
@@ -372,7 +500,7 @@ export default function GardenerTasks() {
               </Text>
               <View style={styles.list}>
                 {pending.map((t) => (
-                  <TaskCard key={t.taskId} task={t} onStart={handleStart} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} onSchedule={openScheduleModal} />
+                  <TaskCard key={t.taskId} task={t} onStart={handleStart} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} onSchedule={openScheduleModal} onOpenQuestions={openQuestionsModal} />
                 ))}
               </View>
             </>
@@ -386,7 +514,7 @@ export default function GardenerTasks() {
               </Text>
               <View style={styles.list}>
                 {done.map((t) => (
-                  <TaskCard key={t.taskId} task={t} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} />
+                  <TaskCard key={t.taskId} task={t} onEdit={openEdit} onDelete={setConfirmDeleteId} confirmDeleteId={confirmDeleteId} onConfirmDelete={handleDelete} onCancelDelete={() => setConfirmDeleteId(null)} deleting={deleting} actionLoading={actionLoading} onOpenQuestions={openQuestionsModal} />
                 ))}
               </View>
             </>
@@ -722,12 +850,200 @@ export default function GardenerTasks() {
           </ScrollView>
         </View>
       </Modal>
+
+      {/* Task Questions modal — merged with create form view */}
+      <Modal visible={showQuestionsModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => { setShowQuestionsModal(false); setCreatingNewQuestion(false); setLightboxUrl(null); }}>
+        <View style={styles.modal}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{creatingNewQuestion ? 'Ask a Question' : '❓ Questions'}</Text>
+            <TouchableOpacity onPress={() => { if (creatingNewQuestion) { setCreatingNewQuestion(false); } else { setShowQuestionsModal(false); } }}>
+              <Text style={styles.modalClose}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {!creatingNewQuestion ? (
+            <>
+              {questionsTask ? (
+                <View style={schedStyles.taskChip}>
+                  <Text style={schedStyles.taskChipLabel}>Task</Text>
+                  <Text style={schedStyles.taskChipName}>{questionsTask.name}</Text>
+                  <Text style={schedStyles.taskChipJob}>{questionsTask.jobName}</Text>
+                </View>
+              ) : null}
+              <ScrollView contentContainerStyle={[styles.modalBody, { paddingTop: 8 }]} showsVerticalScrollIndicator={false}>
+                {questionsLoading ? (
+                  <ActivityIndicator color={GardenColors.accent} style={{ marginVertical: 24 }} />
+                ) : taskQuestions.length === 0 ? (
+                  <View style={styles.emptyCard}>
+                    <Text style={styles.emptyText}>No questions yet.</Text>
+                    <Text style={styles.emptySubText}>Ask the client a question to clarify task details.</Text>
+                  </View>
+                ) : (
+                  taskQuestions.map((q) => {
+                    const answered = q.status === 'Answered';
+                    return (
+                      <View key={q.questionId} style={[qStyles.card, !answered && qStyles.cardPending]}>
+                        <View style={qStyles.cardHeader}>
+                          <View style={[qStyles.statusBadge, answered ? qStyles.badgeAnswered : qStyles.badgePending]}>
+                            <Text style={qStyles.statusBadgeText}>{answered ? 'Answered' : 'Pending'}</Text>
+                          </View>
+                          <Text style={qStyles.cardMeta}>{new Date(q.createdAt).toLocaleDateString()}</Text>
+                        </View>
+                        <Text style={qStyles.questionText}>{q.text}</Text>
+                        {q.type === 'MultipleChoice' && q.options && q.options.length > 0 && (
+                          <View style={qStyles.optionsContainer}>
+                            {q.options.map((opt) => (
+                              <View key={opt.optionId} style={qStyles.optionChip}>
+                                <Text style={qStyles.optionChipText}>{opt.text}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                        {q.mediaUrls && q.mediaUrls.length > 0 && (
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={qStyles.mediaRow}>
+                            {q.mediaUrls.map((url, i) => (
+                              <TouchableOpacity key={i} onPress={() => setLightboxUrl(url)}>
+                                <Image source={{ uri: url }} style={qStyles.mediaThumbnail} />
+                              </TouchableOpacity>
+                            ))}
+                          </ScrollView>
+                        )}
+                        {answered && q.answer && (
+                          <View style={qStyles.answerBox}>
+                            <Text style={qStyles.answerLabel}>
+                              Client's answer{q.answer.answeredByName ? ` (${q.answer.answeredByName})` : ''}:
+                            </Text>
+                            <Text style={qStyles.answerText}>{q.answer.text}</Text>
+                            {q.answer.mediaUrls && q.answer.mediaUrls.length > 0 && (
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={qStyles.mediaRow}>
+                                {q.answer.mediaUrls.map((url, i) => (
+                                  <TouchableOpacity key={i} onPress={() => setLightboxUrl(url)}>
+                                    <Image source={{ uri: url }} style={qStyles.mediaThumbnail} />
+                                  </TouchableOpacity>
+                                ))}
+                              </ScrollView>
+                            )}
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })
+                )}
+                <TouchableOpacity style={[styles.modalBtn, { marginTop: 16 }]} onPress={openCreateQuestion} activeOpacity={0.85}>
+                  <Text style={styles.modalBtnText}>+ Ask a Question</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </>
+          ) : (
+            <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
+              <Text style={styles.modalLabel}>Question Type</Text>
+              <View style={styles.toggleRow}>
+                {(['FreeText', 'MultipleChoice'] as QuestionType[]).map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.toggleBtn, questionType === t && styles.toggleBtnActive]}
+                    onPress={() => setQuestionType(t)}
+                  >
+                    <Text style={[styles.toggleBtnText, questionType === t && styles.toggleBtnTextActive]}>
+                      {t === 'FreeText' ? 'Free Text' : 'Multiple Choice'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.modalLabel}>Question *</Text>
+              <TextInput
+                style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
+                value={questionText}
+                onChangeText={setQuestionText}
+                placeholder="Ask the client..."
+                placeholderTextColor={GardenColors.textMuted}
+                multiline
+                autoFocus
+              />
+
+              {questionType === 'MultipleChoice' && (
+                <>
+                  <Text style={styles.modalLabel}>Options (at least 2)</Text>
+                  {questionOptions.map((opt, idx) => (
+                    <View key={idx} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                      <TextInput
+                        style={[styles.modalInput, { flex: 1 }]}
+                        value={opt}
+                        onChangeText={(v) => setQuestionOptions((prev) => prev.map((o, i) => (i === idx ? v : o)))}
+                        placeholder={`Option ${idx + 1}`}
+                        placeholderTextColor={GardenColors.textMuted}
+                      />
+                      {questionOptions.length > 2 && (
+                        <TouchableOpacity onPress={() => setQuestionOptions((prev) => prev.filter((_, i) => i !== idx))}>
+                          <Text style={{ color: GardenColors.error, fontSize: 18 }}>✕</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                  <TouchableOpacity onPress={() => setQuestionOptions((prev) => [...prev, ''])} style={{ marginTop: 4 }}>
+                    <Text style={{ color: GardenColors.accent, fontSize: 13 }}>+ Add option</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              <Text style={styles.modalLabel}>Attach image (optional)</Text>
+              <TouchableOpacity style={qStyles.mediaPickerBtn} onPress={pickQuestionMedia} activeOpacity={0.8}>
+                <Text style={qStyles.mediaPickerBtnText}>📎 Add image</Text>
+              </TouchableOpacity>
+              {questionMedia.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={qStyles.mediaRow}>
+                  {questionMedia.map((m, i) => (
+                    <View key={i} style={{ position: 'relative' }}>
+                      <Image source={{ uri: m.mediaUrl }} style={qStyles.mediaThumbnail} />
+                      <TouchableOpacity
+                        style={qStyles.mediaRemoveBtn}
+                        onPress={() => setQuestionMedia((prev) => prev.filter((_, idx) => idx !== i))}
+                      >
+                        <Text style={qStyles.mediaRemoveBtnText}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+
+              <TouchableOpacity
+                style={[styles.modalBtn, creatingQuestion && styles.btnDisabled]}
+                onPress={handleCreateQuestion}
+                disabled={creatingQuestion}
+                activeOpacity={0.85}
+              >
+                {creatingQuestion ? <ActivityIndicator color="#071108" /> : <Text style={styles.modalBtnText}>Send Question</Text>}
+              </TouchableOpacity>
+            </ScrollView>
+          )}
+
+          {lightboxUrl !== null && (
+            <View style={qStyles.lightboxOverlay}>
+              <ScrollView
+                style={{ flex: 1, width: '100%' }}
+                contentContainerStyle={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+                maximumZoomScale={5}
+                minimumZoomScale={1}
+                centerContent
+                showsHorizontalScrollIndicator={false}
+                showsVerticalScrollIndicator={false}
+              >
+                <Image source={{ uri: lightboxUrl }} style={qStyles.lightboxImage} resizeMode="contain" />
+              </ScrollView>
+              <TouchableOpacity style={qStyles.lightboxClose} onPress={() => setLightboxUrl(null)}>
+                <Text style={qStyles.lightboxCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
 
 function TaskCard({
-  task, onStart, onFinish, onEdit, onDelete, onConfirmDelete, onCancelDelete, onSchedule, confirmDeleteId, deleting, actionLoading,
+  task, onStart, onFinish, onEdit, onDelete, onConfirmDelete, onCancelDelete, onSchedule, onOpenQuestions, confirmDeleteId, deleting, actionLoading,
 }: {
   task: TaskWithJob;
   onStart?: (t: TaskWithJob) => void;
@@ -737,6 +1053,7 @@ function TaskCard({
   onConfirmDelete: (id: string) => void;
   onCancelDelete: () => void;
   onSchedule?: (t: TaskWithJob) => void;
+  onOpenQuestions: (t: TaskWithJob) => void;
   confirmDeleteId: string | null;
   deleting: boolean;
   actionLoading: string | null;
@@ -783,7 +1100,7 @@ function TaskCard({
         </View>
       )}
 
-      {/* Edit / Delete row — same pattern as jobs */}
+      {/* Edit / Delete row — icon buttons */}
       {confirmDeleteId === task.taskId ? (
         <View style={tcStyles.confirmRow}>
           <Text style={tcStyles.confirmText}>Delete this task?</Text>
@@ -799,16 +1116,19 @@ function TaskCard({
       ) : (
         <View style={tcStyles.actionRow}>
           {onSchedule ? (
-            <TouchableOpacity style={tcStyles.actionBtn} onPress={() => onSchedule(task)}>
-              <Text style={tcStyles.actionSchedule}>📅 Schedule</Text>
+            <TouchableOpacity style={tcStyles.iconBtn} onPress={() => onSchedule(task)}>
+              <Ionicons name="calendar-outline" size={16} color={GardenColors.accent} />
             </TouchableOpacity>
           ) : null}
-          <View style={{ flex: 1 }} />
-          <TouchableOpacity style={tcStyles.actionBtn} onPress={() => onEdit(task)}>
-            <Text style={tcStyles.actionEdit}>Edit</Text>
+          <TouchableOpacity style={tcStyles.iconBtn} onPress={() => onOpenQuestions(task)}>
+            <Ionicons name="chatbubble-ellipses-outline" size={16} color="#facc15" />
           </TouchableOpacity>
-          <TouchableOpacity style={tcStyles.actionBtn} onPress={() => onDelete(task.taskId)}>
-            <Text style={tcStyles.actionDelete}>Delete</Text>
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity style={tcStyles.iconBtn} onPress={() => onEdit(task)}>
+            <Ionicons name="pencil-outline" size={16} color={GardenColors.textPrimary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[tcStyles.iconBtn, tcStyles.iconBtnDanger]} onPress={() => onDelete(task.taskId)}>
+            <Ionicons name="trash-outline" size={16} color={GardenColors.error} />
           </TouchableOpacity>
         </View>
       )}
@@ -923,6 +1243,14 @@ const tcStyles = StyleSheet.create({
   actionEdit: { fontSize: 12, fontWeight: '600', color: GardenColors.textPrimary },
   actionDelete: { fontSize: 12, fontWeight: '600', color: GardenColors.error },
   actionSchedule: { fontSize: 12, fontWeight: '600', color: GardenColors.accent },
+  actionQuestions: { fontSize: 12, fontWeight: '600', color: '#facc15' },
+  iconBtn: {
+    width: 34, height: 34, borderRadius: 999,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1, borderColor: GardenColors.cardBorder,
+    backgroundColor: GardenColors.cardBg,
+  },
+  iconBtnDanger: { borderColor: 'rgba(239,68,68,0.4)', backgroundColor: 'rgba(239,68,68,0.08)' },
 });
 
 const schedStyles = StyleSheet.create({
@@ -943,4 +1271,61 @@ const schedStyles = StyleSheet.create({
   },
   pickerBtnText: { fontSize: 14, color: GardenColors.textPrimary },
   pickerBtnIcon: { fontSize: 16 },
+});
+
+const qStyles = StyleSheet.create({
+  card: {
+    backgroundColor: GardenColors.cardBg, borderRadius: 14,
+    borderWidth: 1, borderColor: GardenColors.cardBorder, padding: 14, gap: 8, marginBottom: 10,
+  },
+  cardPending: { borderColor: 'rgba(250, 204, 21, 0.4)', backgroundColor: 'rgba(250, 204, 21, 0.04)' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
+  badgePending: { backgroundColor: 'rgba(250, 204, 21, 0.15)', borderWidth: 1, borderColor: 'rgba(250, 204, 21, 0.4)' },
+  badgeAnswered: { backgroundColor: 'rgba(74, 222, 128, 0.12)', borderWidth: 1, borderColor: 'rgba(74, 222, 128, 0.4)' },
+  statusBadgeText: { fontSize: 11, fontWeight: '600', color: GardenColors.textPrimary },
+  cardMeta: { fontSize: 11, color: GardenColors.textMuted },
+  questionText: { fontSize: 14, color: GardenColors.textPrimary, lineHeight: 20 },
+  optionsContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  optionChip: {
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999,
+    backgroundColor: GardenColors.cardBg, borderWidth: 1, borderColor: GardenColors.cardBorder,
+  },
+  optionChipText: { fontSize: 12, color: GardenColors.textMuted },
+  mediaRow: { marginTop: 4 },
+  mediaThumbnail: { width: 72, height: 72, borderRadius: 8, marginRight: 8, backgroundColor: GardenColors.cardBorder },
+  answerBox: {
+    backgroundColor: 'rgba(74, 222, 128, 0.06)', borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(74, 222, 128, 0.2)', padding: 10, gap: 4,
+  },
+  answerLabel: { fontSize: 11, color: GardenColors.textMuted, fontWeight: '600' },
+  answerText: { fontSize: 13, color: GardenColors.textPrimary },
+  deleteBtn: {
+    alignSelf: 'flex-start', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 999,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.4)', backgroundColor: 'rgba(239,68,68,0.08)',
+  },
+  deleteBtnText: { fontSize: 12, fontWeight: '600', color: GardenColors.error },
+  mediaPickerBtn: {
+    height: 44, borderRadius: 12, borderWidth: 1, borderColor: GardenColors.cardBorder,
+    backgroundColor: GardenColors.cardBg, alignItems: 'center', justifyContent: 'center',
+  },
+  mediaPickerBtnText: { fontSize: 13, color: GardenColors.textMuted },
+  mediaRemoveBtn: {
+    position: 'absolute', top: 2, right: 10, width: 18, height: 18, borderRadius: 999,
+    backgroundColor: 'rgba(239,68,68,0.85)', alignItems: 'center', justifyContent: 'center',
+  },
+  mediaRemoveBtnText: { fontSize: 10, color: '#fff', fontWeight: '700' },
+  lightboxOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 200,
+  },
+  lightboxImage: { width: SCREEN_W, height: SCREEN_H * 0.78 },
+  lightboxClose: {
+    position: 'absolute', top: 16, right: 16,
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    alignItems: 'center', justifyContent: 'center',
+    zIndex: 201,
+  },
+  lightboxCloseText: { fontSize: 16, color: '#fff', fontWeight: '700' },
 });
