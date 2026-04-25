@@ -2,6 +2,7 @@ import { GardenColors } from '@/constants/theme';
 import { getClientJobInvoice, getGardenerJobInvoice } from '@/services/api';
 import { documentDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
 import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
 import { useCallback, useState } from 'react';
 import {
     ActivityIndicator, Alert, Modal, StyleSheet, Text, TouchableOpacity, View,
@@ -61,6 +62,7 @@ export default function InvoiceViewer({
       <View style={styles.overlay}>
         <View style={styles.container}>
           <Text style={styles.title}>Invoice</Text>
+          <Text style={styles.version}>v{Constants.expoConfig?.version || '1.0.0'}</Text>
 
           {error ? (
             <Text style={styles.error}>{error}</Text>
@@ -125,6 +127,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 12,
     color: GardenColors.textPrimary,
+  },
+  version: {
+    fontSize: 12,
+    color: GardenColors.textMuted,
+    marginBottom: 16,
   },
   message: {
     fontSize: 14,

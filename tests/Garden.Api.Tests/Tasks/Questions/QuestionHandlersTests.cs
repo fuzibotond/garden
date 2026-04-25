@@ -350,4 +350,48 @@ public class QuestionHandlersTests
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(() => handler.Handle(request));
     }
+
+    [Fact]
+    public async Task CreateQuestion_Should_Throw_When_Gardener_Is_Not_Assigned_To_Job()
+    {
+        var context = CreateContext($"{nameof(CreateQuestion_Should_Throw_When_Gardener_Is_Not_Assigned_To_Job)}-{Guid.NewGuid()}");
+        var eventPublisher = new Mock<IEventPublisher>();
+
+        var gardenerId = Guid.NewGuid();
+        var clientId = Guid.NewGuid();
+        var taskId = Guid.NewGuid();
+        var jobId = Guid.NewGuid();
+
+        context.Jobs.Add(new JobRecord
+        {
+            Id = jobId,
+            ClientId = clientId,
+            Name = "Job",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        context.Tasks.Add(new TaskRecord
+        {
+            Id = taskId,
+            JobId = jobId,
+            TaskTypeId = Guid.NewGuid(),
+            Name = "Task",
+            CreatedAtUtc = DateTime.UtcNow,
+            UpdatedAtUtc = DateTime.UtcNow
+        });
+        await context.SaveChangesAsync();
+
+        var currentUser = new FakeCurrentUser { UserId = gardenerId, IsAuthenticated = true };
+        var handler = new CreateQuestionHandler(context, currentUser, eventPublisher.Object);
+
+        var request = new CreateQuestionRequest
+        {
+            TaskId = taskId,
+            QuestionText = "Which color?",
+            QuestionType = QuestionType.MultipleChoice,
+            PredefinedOptions = ["Red", "Blue"]
+        };
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => handler.Handle(request));
+    }
 }
