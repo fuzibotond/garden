@@ -1,18 +1,23 @@
 # Developer Guide
 
-**Version**: 1.1  
-**Last Updated**: 2026-04-24
+**Version**: 1.1.1
+**Last Updated**: 2026-04-26
 
 ---
 
 ## Change Log
 
-### [1.1] - 2026-04-24
+### [1.1.1] - 2026-04-26
+- Updated local environment setup to `.env.local`
+- Corrected environment variable names to `ConnectionStrings__GardenDb` and `Jwt__Key`
+- Normalized version format to semantic versioning
+
+### [1.1.0] - 2026-04-24
 - Added Task Questions and Answers feature implementation example
 - Added RabbitMQ event consumer patterns for questions
 - Updated best practices for event-driven features
 
-### [1.0] - 2026-04-24
+### [1.0.0] - 2026-04-24
 - Initial developer guide
 
 ---
@@ -54,23 +59,39 @@ cd garden/src/Garden
 docker-compose up -d
 ```
 
-3. **Restore dependencies**
+3. **Create local environment file**
+
+Create `Garden.Api/.env.local`:
+```env
+# JWT
+Jwt__Key=super-local-dev-secret-key-change-me
+Jwt__Issuer=Garden
+Jwt__Audience=GardenUsers
+
+# SQL
+SQL_PASSWORD=LocalStrongPassword123!
+
+# Connection string
+ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True;
+```
+
+4. **Restore dependencies**
 ```bash
 dotnet restore
 ```
 
-4. **Run migrations**
+5. **Run migrations**
 ```bash
 cd Garden.Api
 dotnet ef database update
 ```
 
-5. **Run the application**
+6. **Run the application**
 ```bash
 dotnet run
 ```
 
-6. **Verify**
+7. **Verify**
 - API: https://localhost:7001
 - Swagger: https://localhost:7001/swagger
 - RabbitMQ Console: http://localhost:15672 (guest/guest)
@@ -703,14 +724,3 @@ builder.Services.AddMassTransit(x =>
 ❌ Skip error handling
 ❌ Commit without running tests
 ❌ Create new patterns without discussion
-
----
-
-## Change Log
-
-### [1.0.0] - 2026-04-24
-- Initial developer guide
-- Development workflow documented
-- Code patterns explained
-- Testing strategies included
-- Common tasks covered

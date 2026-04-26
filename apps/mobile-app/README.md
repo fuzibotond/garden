@@ -91,7 +91,29 @@ docs/             # Project documentation
 
 ---
 
-## Architecture
+## Features
+
+**For Gardeners:**
+- Create and manage jobs
+- Track tasks and materials
+- Schedule tasks with clients
+- Ask questions and attach media
+- View and download job invoices
+
+**For Clients:**
+- Accept, decline, or propose alternative times for appointments
+- Answer gardener questions with photo attachments
+- View tasks and completion progress
+- Download invoices for closed jobs
+
+**Core Capabilities:**
+- Real-time push notifications for schedule updates
+- Fallback polling (30s) when app is open
+- Q&A system with media support
+- Role-based access control
+- Secure JWT token storage
+
+---
 
 **Modular Monolith** — single Expo app with role-based route groups:
 

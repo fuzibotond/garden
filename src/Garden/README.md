@@ -59,21 +59,20 @@ This starts:
 - RabbitMQ (port 5672, management UI: http://localhost:15672)
 - MailDev (SMTP testing: http://localhost:1080)
 
-3. **Configure application settings**
+3. **Configure local environment variables**
 
-Update `Garden.Api/appsettings.json`:
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=localhost,1433;Database=garden;User Id=sa;Password=YourPassword123;TrustServerCertificate=True;"
-  },
-  "Jwt": {
-    "Secret": "your-32-char-minimum-secret-key-here",
-    "Issuer": "Garden",
-    "Audience": "GardenUsers",
-    "ExpiresInMinutes": 60
-  }
-}
+Create `Garden.Api/.env.local`:
+```env
+# JWT
+Jwt__Key=super-local-dev-secret-key-change-me
+Jwt__Issuer=Garden
+Jwt__Audience=GardenUsers
+
+# SQL
+SQL_PASSWORD=LocalStrongPassword123!
+
+# Connection string
+ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True;
 ```
 
 4. **Run database migrations**
@@ -285,13 +284,12 @@ Required environment variables (or appsettings.json):
 
 ```bash
 # Database
-ConnectionStrings__DefaultConnection="Server=localhost,1433;Database=garden;..."
+ConnectionStrings__GardenDb="Server=localhost,1433;Database=GardenDb;..."
 
 # JWT
-Jwt__Secret="minimum-32-character-secret-key"
+Jwt__Key="minimum-32-character-secret-key"
 Jwt__Issuer="Garden"
 Jwt__Audience="GardenUsers"
-Jwt__ExpiresInMinutes="60"
 
 # RabbitMQ
 RabbitMq__HostName="localhost"
@@ -319,6 +317,6 @@ For issues or questions:
 
 ---
 
-**Version**: 1.0  
-**Last Updated**: 2026-04-24  
+**Version**: 1.0.1  
+**Last Updated**: 2026-04-26  
 **Status**: ✅ Production Ready

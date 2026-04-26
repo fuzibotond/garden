@@ -1,7 +1,7 @@
 # Documentation Index
 
-**Version**: 1.0  
-**Last Updated**: 2026-04-24
+**Version**: 1.0.1  
+**Last Updated**: 2026-04-26
 
 ---
 
@@ -33,9 +33,10 @@ Welcome to the Garden App Backend documentation! This folder contains comprehens
 ### For New Developers
 
 1. Start with [Developer Guide](DEVELOPER_GUIDE.md) → Getting Started
-2. Read [Architecture Guide](ARCHITECTURE.md) → Overview
-3. Review [API Reference](API_REFERENCE.md) for available endpoints
-4. Check [Database Schema](DATABASE.md) to understand data model
+2. Create `Garden.Api/.env.local` using the Developer Guide setup section
+3. Read [Architecture Guide](ARCHITECTURE.md) → Overview
+4. Review [API Reference](API_REFERENCE.md) for available endpoints
+5. Check [Database Schema](DATABASE.md) to understand data model
 
 ### For Frontend Developers
 
@@ -282,6 +283,10 @@ Please create a GitHub issue with:
 ---
 
 ## Change Log
+
+### [1.0.1] - 2026-04-26
+- Updated docs index version metadata to semantic version format
+- Added quick-start reference to `.env.local` setup in Developer Guide
 
 ### [1.0.0] - 2026-04-24
 - Initial documentation structure

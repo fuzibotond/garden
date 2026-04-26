@@ -1,7 +1,7 @@
 # Garden Web App — Documentation
 
-**Version:** 1.0.0  
-**Last Updated:** 2026-04-24  
+**Version:** 1.1.0  
+**Last Updated:** 2026-04-26  
 **Status:** Active
 
 ---
@@ -22,6 +22,8 @@
 12. [Development Setup](#development-setup)
 13. [Notes & Decisions](#notes--decisions)
 14. [Change Log](#change-log)
+
+---
 
 ---
 
@@ -89,6 +91,7 @@ apps/web/
 │   │   ├── login/               ← LoginPage
 │   │   ├── materials/           ← MaterialsPage
 │   │   ├── profile/             ← ProfilePage
+│   │   ├── questions/           ← GardenerQuestionsPage, ClientQuestionsPage
 │   │   ├── scheduling/          ← ClientSchedulingPage, GardenerSchedulingPage
 │   │   ├── tasks/               ← TasksPage
 │   │   └── users/               ← UsersPage
@@ -134,17 +137,16 @@ VITE_TARGET_URL=https://<your-ngrok-subdomain>.ngrok-free.app
 
 ### Vite Proxy
 
-The Vite dev server is configured to proxy all `/api/*` requests to `VITE_TARGET_URL`:
+The Vite dev server proxies two path prefixes to `VITE_TARGET_URL`:
 
-```
-Browser → /api/auth/login
-       → Vite proxy strips /api
-       → VITE_TARGET_URL/auth/login
-```
+| Browser path | Proxy behaviour | Example |
+|---|---|---|
+| `/api/*` | Strips `/api`, forwards to backend | `/api/auth/login` → `VITE_TARGET_URL/auth/login` |
+| `/uploads/*` | Forwarded unchanged | `/uploads/question-media/file.png` → `VITE_TARGET_URL/uploads/question-media/file.png` |
 
 This means the browser never makes a cross-origin request — CORS issues are avoided entirely during local development.
 
-> **Note:** `VITE_API_URL` and `VITE_TARGET_URL` are separate intentionally. The proxy target is a server-side value; the browser only ever sees `VITE_API_URL` (a relative path).
+> **Note:** `VITE_API_URL` and `VITE_TARGET_URL` are separate intentionally. The proxy target is a server-side value; the browser only ever sees `VITE_API_URL` (a relative path). The `/uploads` proxy is needed because the backend stores media URLs with `http://localhost` as origin; `apiClient.ts` strips that origin and returns just the path so the browser fetches through the proxy.
 
 ---
 
@@ -228,6 +230,8 @@ A wrapper component that enforces:
 | `/admin/materials` | `MaterialsPage` | Admin, Gardener |
 | `/gardener/scheduling` | `GardenerSchedulingPage` | Admin, Gardener |
 | `/client/scheduling` | `ClientSchedulingPage` | Client |
+| `/gardener/questions` | `GardenerQuestionsPage` | Gardener |
+| `/client/questions` | `ClientQuestionsPage` | Client |
 
 ---
 
@@ -355,6 +359,52 @@ Client-facing schedule viewer. Same custom calendar plus a list of schedule requ
 
 ---
 
+### Q&A Pages
+
+#### `GardenerQuestionsPage` (`/gardener/questions`)
+Gardener-facing task Q&A. Gardeners select a job and task, then ask questions that the client must answer before or during the job.
+
+**Flow:**
+1. Select a job (active jobs only) → select a task
+2. Click "Ask Question" → choose type (FreeText / MultipleChoice), enter text, optionally add option chips for MC
+3. Questions are split into **Awaiting answer** and **Answered** sections
+4. Each question card shows: status badge, type badge, timestamp, question text, MC option chips, attached media thumbnails (clickable → open in new tab), and the client's answer (text + media thumbnails)
+
+- `GET /api/gardener/jobs`
+- `GET /api/gardener/jobs/:id/tasks`
+- `GET /api/tasks/:taskId/questions`
+- `POST /api/tasks/:taskId/questions`
+
+Role guard: `Gardener` only.
+
+#### `ClientQuestionsPage` (`/client/questions`)
+Client-facing task Q&A. Clients see questions asked by the gardener on each task and submit answers.
+
+**Flow:**
+1. Select a job → select a task
+2. Warning banner shows count of unanswered questions
+3. Pending questions are highlighted; each card shows question text, MC options, attached media thumbnails
+4. "Answer →" button opens an inline modal:
+   - **FreeText**: textarea for free-text reply
+   - **MultipleChoice**: radio-style option buttons + optional custom text
+5. On submit: optimistic update; reloads full answer data
+6. Answered questions show the submitted answer text, media thumbnails, and timestamp
+
+- `GET /api/client/jobs`
+- `GET /api/client/jobs/:id/tasks`
+- `GET /api/tasks/:taskId/questions`
+- `POST /api/questions/:questionId/answers`
+
+Role guard: `Client` only.
+
+#### Media in Q&A
+
+Both Q&A pages display media attached to questions and answers as thumbnail grids. Thumbnails are clickable (open in new tab). The `apiClient.ts` normalizer rewrites `localhost` media URLs to relative `/uploads/...` paths, which are served through the Vite dev proxy.
+
+Media upload from the web is not supported — media is attached via the mobile app only.
+
+---
+
 ## API Client
 
 **File:** [src/services/apiClient.ts](../src/services/apiClient.ts)
@@ -392,6 +442,15 @@ type TaskDto = { id, jobId, name, description, actualTimeHours, wagePerHour, mat
 type TaskScheduleDto = { id, taskId, taskName, clientId, scheduledAtUtc, status, … }
 type MaterialDto = { id, name, amountType, pricePerAmount }
 type TaskTypeDto = { id, name, gardenerId }
+
+// Q&A types
+type QuestionType   = "FreeText" | "MultipleChoice"
+type QuestionStatus = "Pending" | "Answered"
+type QuestionOptionDto = { optionId: string; text: string }
+type QuestionAnswerDto = { answerId, questionId, text, answeredAt, answeredByName?, mediaUrls? }
+type TaskQuestionDto   = { questionId, taskId, taskName?, text, type, options?, status,
+                           createdAt, askedByName?, mediaUrls?, answer? }
+type CreateQuestionRequest = { text: string; type: QuestionType; options?: string[] }
 ```
 
 ### API Function Groups
@@ -413,6 +472,7 @@ type TaskTypeDto = { id, name, gardenerId }
 | Gardener Materials | `/api/gardener/materials` | `createGardenerMaterial`, `getGardenerMaterials`, `getGardenerMaterialById`, `updateGardenerMaterial`, `deleteGardenerMaterial` |
 | Gardener Scheduling | `/api/gardener/scheduling` | `gardenerScheduleTask`, `getGardenerSchedulingCalendar`, `gardenerRescheduleTask` |
 | Client Scheduling | `/api/client/scheduling` | `getClientSchedulingCalendar`, `clientApproveSchedule`, `clientDeclineSchedule`, `clientProposeAlternativeTime` |
+| Task Q&A | `/api/tasks`, `/api/questions`, `/api/answers` | `getTaskQuestions`, `createGardenerQuestion`, `answerClientQuestion` |
 
 ---
 
@@ -504,6 +564,7 @@ Two-column shell used by all authenticated pages: `admin-sidebar` + `admin-main`
 | Tasks | ✅ | ✅ | ✅ |
 | Materials | ✅ | ✅ | — |
 | Schedule | ✅ | ✅ | ✅ |
+| Questions | — | ✅ | ✅ |
 | My Profile | ✅ | ✅ | ✅ |
 
 > Clients navigate to `/client/scheduling`; Admins and Gardeners navigate to `/gardener/scheduling`.
@@ -575,6 +636,10 @@ npm run lint
 
 During development the backend may be tunnelled through ngrok. The browser blocks cross-origin requests unless the backend sends `Access-Control-Allow-Origin`. Rather than requiring backend config changes per developer session, the Vite proxy forwards `/api/*` server-side — the browser never makes a cross-origin request.
 
+### Why `/uploads` is also proxied
+
+The backend stores media file URLs with its own `http://localhost` origin (e.g. `http://localhost:5000/uploads/question-media/file.png`). When the web app renders these as `<img src>`, the browser would request `localhost:5000` directly — which is unreachable in most dev setups. The `normalizeQuestion` function in `apiClient.ts` strips the `localhost` origin and returns just the path (`/uploads/...`). The Vite proxy then forwards those requests to `VITE_TARGET_URL`, making the images load correctly. The same rewrite logic mirrors what the mobile app does.
+
 ### Why `VITE_API_URL` and `VITE_TARGET_URL` are separate
 
 `VITE_TARGET_URL` is consumed by `vite.config.ts` via `loadEnv` at build/dev-server startup — it is **never** embedded in the browser bundle. `VITE_API_URL` is the relative path (`/api`) the browser-side code calls. Keeping them separate ensures the actual backend address is never leaked to the client.
@@ -598,6 +663,19 @@ The file exists as a stub. It is intended for hydration-safe rendering patterns 
 ---
 
 ## Change Log
+
+### [1.1.0] - 2026-04-26
+
+- Added Task Q&A feature: `GardenerQuestionsPage` and `ClientQuestionsPage`
+- Added `/gardener/questions` and `/client/questions` routes
+- Added `pages/questions/` folder to Folder Structure
+- Added Questions nav links for Gardener and Client roles in sidebar table
+- Added Q&A DTOs to Key Shared DTOs section
+- Added `getTaskQuestions`, `createGardenerQuestion`, `answerClientQuestion` to API function group table
+- Added media display in Q&A: question and answer thumbnail grids, clickable to open full-size
+- Added `/uploads` Vite proxy for backend-stored media URLs
+- Updated `normalizeQuestion` in `apiClient.ts` to rewrite `localhost` media URL origins to relative paths
+- Added Notes section for `/uploads` proxy rationale
 
 ### [1.0.0] - 2026-04-24
 

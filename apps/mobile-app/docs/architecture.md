@@ -1,8 +1,8 @@
 # Architecture
 
 **Project:** Garden Mobile App  
-**Version:** 1.0.0  
-**Last Updated:** 2026-04-24  
+**Version:** 1.2.0  
+**Last Updated:** 2026-04-26  
 **Status:** Active
 
 ---
@@ -58,6 +58,7 @@ mobile-app/
 │   │   └── profile.tsx         # User profile
 │   └── (tabs)/                 # Unused template tabs (Expo scaffold)
 ├── components/                 # Reusable UI components
+│   ├── invoice-viewer.tsx      # Invoice download/view modal component
 │   ├── themed-text.tsx         # Text with GardenColors theming
 │   ├── themed-view.tsx         # View with theme background
 │   ├── parallax-scroll-view.tsx
