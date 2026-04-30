@@ -54,6 +54,9 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               <NavLink to="/admin/tools" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Admin Tools
               </NavLink>
+              <NavLink to="/admin/monitor" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                System Monitor
+              </NavLink>
             </>
           )}
 

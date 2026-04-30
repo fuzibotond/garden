@@ -2,6 +2,7 @@ using Garden.BuildingBlocks.Events;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
 using Garden.BuildingBlocks.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,7 @@ public sealed class ScheduleRequestEmailConsumer : BackgroundService
 {
     private readonly RabbitMqOptions _rabbitOptions;
     private readonly IEmailService _emailService;
+    private readonly string _frontendBaseUrl;
     private readonly IExpoPushNotificationService _pushNotificationService;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ScheduleRequestEmailConsumer> _logger;
@@ -34,12 +36,14 @@ public sealed class ScheduleRequestEmailConsumer : BackgroundService
     public ScheduleRequestEmailConsumer(
         RabbitMqOptions rabbitOptions,
         IEmailService emailService,
+        IConfiguration configuration,
         IExpoPushNotificationService pushNotificationService,
         IServiceScopeFactory scopeFactory,
         ILogger<ScheduleRequestEmailConsumer> logger)
     {
         _rabbitOptions = rabbitOptions ?? throw new ArgumentNullException(nameof(rabbitOptions));
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _frontendBaseUrl = (configuration["Frontend:BaseUrl"] ?? "http://localhost:8082").TrimEnd('/');
         _pushNotificationService = pushNotificationService ?? throw new ArgumentNullException(nameof(pushNotificationService));
         _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -230,7 +234,7 @@ public sealed class ScheduleRequestEmailConsumer : BackgroundService
             <p>Please log in to your Garden account to review and respond to this schedule request.</p>
             
             <p style='text-align: center;'>
-                <a href='http://localhost:5173/schedule-requests' class='button'>View Schedule Request</a>
+                <a href='{_frontendBaseUrl}/schedule-requests' class='button'>View Schedule Request</a>
             </p>
 
             <p>You can approve the schedule, decline it, or propose an alternative time that works better for you.</p>

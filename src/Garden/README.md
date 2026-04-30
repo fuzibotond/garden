@@ -49,60 +49,46 @@ git clone https://github.com/fuzibotond/garden.git
 cd garden/src/Garden
 ```
 
-2. **Start infrastructure services**
+2. **Start the local environment from the repo root**
 ```bash
-docker-compose up -d
+cd ../..
+powershell -ExecutionPolicy Bypass -File .\scripts\launch-local.ps1
 ```
 
-This starts:
-- SQL Server (port 1433)
-- RabbitMQ (port 5672, management UI: http://localhost:15672)
-- MailDev (SMTP testing: http://localhost:1080)
+This starts SQL Server, RabbitMQ, MailHog, the API, the web app, and the Dozzle log viewer.
 
-3. **Configure local environment variables**
+3. **Optional: configure local environment overrides**
 
-Create `Garden.Api/.env.local`:
+Copy the root example files when you need overrides:
 ```env
-# JWT
-Jwt__Key=super-local-dev-secret-key-change-me
-Jwt__Issuer=Garden
-Jwt__Audience=GardenUsers
-
-# SQL
-SQL_PASSWORD=LocalStrongPassword123!
-
-# Connection string
-ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True;
+.env.example -> .env
+.env.local.example -> .env.local
 ```
 
-4. **Run database migrations**
+The API still supports `Garden.Api/.env.local` if you run it outside Docker.
+
+4. **Open the application**
 ```bash
-cd Garden.Api
-dotnet ef database update
+http://localhost:5055/swagger
 ```
 
-5. **Run the application**
-```bash
-dotnet run
-```
-
-The API will be available at: `https://localhost:7001`
+EF Core migrations run automatically during API startup.
 
 ## Running the Project
 
 ### Local Development
 ```bash
-dotnet run --project Garden.Api
+powershell -ExecutionPolicy Bypass -File .\scripts\check-health.ps1
 ```
 
 ### Using Docker
 ```bash
-docker-compose up
+powershell -ExecutionPolicy Bypass -File .\scripts\launch-local.ps1
 ```
 
 ### Running Tests
 ```bash
-dotnet test
+powershell -ExecutionPolicy Bypass -File .\scripts\run-all-tests.ps1
 ```
 
 ## Project Structure

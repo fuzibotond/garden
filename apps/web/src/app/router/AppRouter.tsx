@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom"
 import { getAccessToken, getCurrentUser, hasRole, type Role } from "../../lib/auth"
 import AdminToolsPage from "../../pages/admin/AdminToolsPage"
+import SystemMonitorPage from "../../pages/admin/SystemMonitorPage"
 import ClientSignup from "../../pages/clients/ClientSignup"
 import ClientsPage from "../../pages/clients/ClientsPage"
 import DashboardPage from "../../pages/dashboard/DashboardPage"
@@ -57,6 +58,7 @@ export default function AppRouter() {
           <Route path="/admin/users" element={<UsersPage />} />
           <Route path="/admin/gardeners" element={<GardenersPage />} />
           <Route path="/admin/tools" element={<AdminToolsPage />} />
+          <Route path="/admin/monitor" element={<SystemMonitorPage />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener", "Client"]} />}>

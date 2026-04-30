@@ -1,6 +1,6 @@
 # Garden Web App — Documentation
 
-**Version:** 1.1.0  
+**Version:** 1.2.0  
 **Last Updated:** 2026-04-26  
 **Status:** Active
 
@@ -20,8 +20,9 @@
 10. [Component System](#component-system)
 11. [Layout](#layout)
 12. [Development Setup](#development-setup)
-13. [Notes & Decisions](#notes--decisions)
-14. [Change Log](#change-log)
+13. [Testing & Quality](#testing--quality)
+14. [Notes & Decisions](#notes--decisions)
+15. [Change Log](#change-log)
 
 ---
 
@@ -630,6 +631,59 @@ npm run lint
 
 ---
 
+## Testing & Quality
+
+The web app uses a Vitest + Testing Library + MSW setup for frontend tests.
+
+### Test Stack
+
+| Concern | Tooling |
+|---|---|
+| Test runner | Vitest |
+| DOM environment | jsdom |
+| Component testing | `@testing-library/react` + `@testing-library/user-event` |
+| Assertions | `@testing-library/jest-dom` |
+| Network mocking | MSW (`msw`, `msw/node`) |
+| Coverage provider | `@vitest/coverage-v8` |
+
+### Test Files
+
+- Test root: `src/__tests__/`
+- Global setup: `src/__tests__/setup.ts`
+- MSW handlers: `src/__tests__/mocks/handlers.ts`
+- Router helper: `src/__tests__/utils/renderWithRouter.tsx`
+
+### Commands
+
+```bash
+npm run test
+npm run test:watch
+npm run test:coverage
+npm run test:ui
+```
+
+### Coverage Scope & Thresholds
+
+Coverage is enforced on targeted, high-value frontend files:
+
+- `src/lib/auth.ts`
+- `src/services/apiClient.ts`
+- `src/pages/login/LoginPage.tsx`
+- `src/pages/dashboard/DashboardPage.tsx`
+- `src/pages/jobs/JobsPage.tsx`
+- `src/pages/scheduling/ClientSchedulingPage.tsx`
+
+Current global thresholds in `vitest.config.ts`:
+
+- Statements: 45%
+- Branches: 45%
+- Functions: 30%
+- Lines: 48%
+
+These thresholds are intentionally aligned with current tested surface area and are expected to increase as additional page and API flows get test coverage.
+
+---
+
 ## Notes & Decisions
 
 ### Why Vite proxy instead of CORS headers?
@@ -663,6 +717,13 @@ The file exists as a stub. It is intended for hydration-safe rendering patterns 
 ---
 
 ## Change Log
+
+### [1.2.0] - 2026-04-26
+
+- Added Testing & Quality section for the web frontend
+- Documented Vitest, Testing Library, jsdom, MSW, and v8 coverage setup
+- Added test command reference (`test`, `test:watch`, `test:coverage`, `test:ui`)
+- Documented coverage target files and active threshold values
 
 ### [1.1.0] - 2026-04-26
 

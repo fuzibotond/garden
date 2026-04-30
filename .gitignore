@@ -11,3 +11,4 @@ secrets/
 secret.yaml
 *.secret.yaml
 .env.local
+artifacts/local-launch/

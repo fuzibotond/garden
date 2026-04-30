@@ -1,11 +1,16 @@
 # Developer Guide
 
-**Version**: 1.1.1
+**Version**: 1.2.0
 **Last Updated**: 2026-04-26
 
 ---
 
 ## Change Log
+
+### [1.2.0] - 2026-04-26
+- Added root local launcher scripts for the full stack
+- Added local health, smoke, and logs workflow
+- Updated local environment guidance to use root `.env.example` files
 
 ### [1.1.1] - 2026-04-26
 - Updated local environment setup to `.env.local`
@@ -54,48 +59,50 @@ git clone https://github.com/fuzibotond/garden.git
 cd garden/src/Garden
 ```
 
-2. **Start infrastructure**
+2. **Start the local stack from the repo root**
 ```bash
-docker-compose up -d
+powershell -ExecutionPolicy Bypass -File .\scripts\launch-local.ps1
 ```
 
-3. **Create local environment file**
+3. **Check local health**
 
-Create `Garden.Api/.env.local`:
+```bash
+powershell -ExecutionPolicy Bypass -File .\scripts\check-health.ps1
+```
+
+4. **Create local environment files only if you need overrides**
+
+Copy the root example files:
 ```env
-# JWT
-Jwt__Key=super-local-dev-secret-key-change-me
-Jwt__Issuer=Garden
-Jwt__Audience=GardenUsers
-
-# SQL
-SQL_PASSWORD=LocalStrongPassword123!
-
-# Connection string
-ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True;
+.env.example -> .env
+.env.local.example -> .env.local
 ```
 
-4. **Restore dependencies**
+5. **Restore dependencies**
 ```bash
 dotnet restore
 ```
 
-5. **Run migrations**
+6. **Run the application outside Docker only when needed**
 ```bash
-cd Garden.Api
-dotnet ef database update
-```
-
-6. **Run the application**
-```bash
+cd src\Garden\Garden.Api
 dotnet run
 ```
 
 7. **Verify**
-- API: https://localhost:7001
-- Swagger: https://localhost:7001/swagger
+- API: http://localhost:5055
+- Swagger: http://localhost:5055/swagger
+- Health: http://localhost:5055/health/ready
+- Metrics: http://localhost:5055/metrics
 - RabbitMQ Console: http://localhost:15672 (guest/guest)
-- MailDev: http://localhost:1080
+- MailHog: http://localhost:8025
+- Dozzle: http://localhost:9999
+
+8. **Run smoke tests**
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\scripts\run-smoke-tests.ps1
+```
 
 ---
 

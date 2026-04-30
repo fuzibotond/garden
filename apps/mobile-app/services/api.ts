@@ -20,7 +20,7 @@ function rewriteMediaUrl(url: string): string {
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
 
-async function request<T>(
+export async function request<T>(
   path: string,
   opts: { method?: HttpMethod; body?: unknown; token?: string | null } = {},
 ): Promise<T> {

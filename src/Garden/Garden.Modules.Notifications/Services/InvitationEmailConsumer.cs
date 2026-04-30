@@ -1,6 +1,7 @@
 using Garden.BuildingBlocks.Events;
 using Garden.BuildingBlocks.Services;
 using Garden.Modules.Clients.Services;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -18,6 +19,7 @@ public sealed class InvitationEmailConsumer : BackgroundService
 {
     private readonly RabbitMqOptions _rabbitOptions;
     private readonly IEmailService _emailService;
+    private readonly string _frontendBaseUrl;
     private readonly ILogger<InvitationEmailConsumer> _logger;
 
     private IConnection? _connection;
@@ -30,10 +32,12 @@ public sealed class InvitationEmailConsumer : BackgroundService
     public InvitationEmailConsumer(
         RabbitMqOptions rabbitOptions,
         IEmailService emailService,
+        IConfiguration configuration,
         ILogger<InvitationEmailConsumer> logger)
     {
         _rabbitOptions = rabbitOptions ?? throw new ArgumentNullException(nameof(rabbitOptions));
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _frontendBaseUrl = (configuration["Frontend:BaseUrl"] ?? "http://localhost:8082").TrimEnd('/');
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -166,8 +170,7 @@ public sealed class InvitationEmailConsumer : BackgroundService
     private async Task SendInvitationEmailAsync(InvitationCreatedEvent @event, CancellationToken cancellationToken)
     {
         var subject = "You're Invited to Garden!";
-        // Link goes directly to signup page with token (no accept endpoint in email)
-        var signupLink = $"http://localhost:5173/signup?token={Uri.EscapeDataString(@event.Token)}";
+        var signupLink = $"{_frontendBaseUrl}/signup?token={Uri.EscapeDataString(@event.Token)}";
         var expiresIn = (@event.ExpiresAtUtc - DateTime.UtcNow).TotalHours;
 
         var body = $@"

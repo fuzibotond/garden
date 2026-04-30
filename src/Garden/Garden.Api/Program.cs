@@ -8,16 +8,33 @@ using Garden.Modules.Materials;
 using Garden.Modules.Notifications;
 using Garden.Modules.Scheduling;
 using Garden.Modules.Tasks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
+using Prometheus;
 using QuestPDF.Infrastructure;
+using System.Diagnostics;
 using System.Security.Claims;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Logging.ClearProviders();
+builder.Logging.Configure(options =>
+{
+    options.ActivityTrackingOptions = ActivityTrackingOptions.SpanId |
+        ActivityTrackingOptions.TraceId |
+        ActivityTrackingOptions.ParentId;
+});
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.TimestampFormat = "O";
+});
 
 if (builder.Environment.IsDevelopment())
 {
@@ -128,11 +145,45 @@ builder.Services.AddDbContext<GardenDbContext>(options =>
         sql => sql.EnableRetryOnFailure())
     .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
+builder.Services
+    .AddHealthChecks()
+    .AddCheck<Garden.Api.Diagnostics.GardenDbHealthCheck>(
+        name: "sqlserver",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["ready"])
+    .AddCheck<Garden.Api.Diagnostics.RabbitMqTcpHealthCheck>(
+        name: "rabbitmq",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["ready"]);
+
 builder.Services.AddScoped<IPasswordHasher<GardenerRecord>, PasswordHasher<GardenerRecord>>();
 builder.Services.AddScoped<IPasswordHasher<ClientRecord>, PasswordHasher<ClientRecord>>();
 // Register RabbitMQ publisher (RabbitMqOptions instance and publisher already registered above)
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    const string correlationIdHeader = "X-Correlation-ID";
+    var correlationId = context.Request.Headers[correlationIdHeader].FirstOrDefault();
+
+    if (string.IsNullOrWhiteSpace(correlationId))
+    {
+        correlationId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
+    }
+
+    context.TraceIdentifier = correlationId;
+    context.Response.Headers[correlationIdHeader] = correlationId;
+
+    using (app.Logger.BeginScope(new Dictionary<string, object>
+    {
+        ["CorrelationId"] = correlationId
+    }))
+    {
+        await next();
+    }
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -152,11 +203,29 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseHttpMetrics();
 
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+var liveHealthOptions = new HealthCheckOptions
+{
+    Predicate = _ => false,
+    ResponseWriter = Garden.Api.Diagnostics.HealthCheckResponseWriter.WriteAsync
+};
+
+var readyHealthOptions = new HealthCheckOptions
+{
+    Predicate = registration => registration.Tags.Contains("ready"),
+    ResponseWriter = Garden.Api.Diagnostics.HealthCheckResponseWriter.WriteAsync
+};
+
+app.MapHealthChecks("/health", readyHealthOptions);
+app.MapHealthChecks("/health/live", liveHealthOptions);
+app.MapHealthChecks("/health/ready", readyHealthOptions);
+app.MapMetrics("/metrics");
 
 app.MapControllers();
 app.MapIdentityEndpoints();
