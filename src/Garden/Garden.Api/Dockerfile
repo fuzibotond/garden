@@ -24,4 +24,6 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 COPY --from=build /app/publish .
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Garden.Api.dll"]
+# Railway injects $PORT at runtime. We forward it to ASPNETCORE_HTTP_PORTS so Kestrel picks it up.
+# Falls back to 8080 for local docker-compose.
+ENTRYPOINT ["sh", "-c", "ASPNETCORE_HTTP_PORTS=${PORT:-8080} dotnet Garden.Api.dll"]

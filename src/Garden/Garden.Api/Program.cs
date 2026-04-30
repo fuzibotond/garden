@@ -261,9 +261,11 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Database migration failed:");
-        Console.WriteLine(ex.Message);
-        throw;
+        // Log but do not crash — /health/live must respond so Railway does not loop-restart.
+        // /health/ready will stay unhealthy until the DB is reachable.
+        // Fix: set the ConnectionStrings__GardenDb environment variable in Railway.
+        Console.WriteLine("Database migration failed (app will continue starting):");
+        Console.WriteLine(ex.ToString());
     }
 }
 
