@@ -1,8 +1,9 @@
-name: Deploy QA
+name: Deploy QA (local k8s — disabled)
+# This workflow targets a self-hosted Windows/K8s runner and is intentionally
+# NOT triggered automatically. Railway deployment on main is handled by
+# deploy-railway-main.yml instead.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 concurrency:
