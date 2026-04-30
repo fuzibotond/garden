@@ -2,6 +2,8 @@
 
 Garden uses a CI/CD pipeline with Kubernetes.
 
+For local development, the canonical environment is the root `docker-compose.yml` plus the PowerShell scripts in `scripts/`.
+
 Architecture:
 
 GitHub
@@ -39,6 +41,36 @@ Pods:
 
 garden-api
 garden-sqlserver
+
+---
+
+# Local Launch Stack
+
+Local development stays on Docker Compose and does not require Kubernetes.
+
+Local services:
+
+- sqlserver
+- rabbitmq
+- mailhog
+- api
+- web
+- dozzle
+
+Local observability:
+
+- API health endpoints: `/health/live`, `/health/ready`
+- API metrics endpoint: `/metrics`
+- JSON console logs with correlation IDs
+- RabbitMQ management UI
+- Dozzle container log viewer
+
+The root launcher scripts provide:
+
+- one-command startup and shutdown
+- health/status snapshots
+- smoke checks
+- combined test execution
 
 ---
 
@@ -143,6 +175,8 @@ Data path:
 /var/opt/mssql
 
 This prevents database data loss when pods restart.
+
+Local Docker Compose also uses persistent volumes for SQL Server and RabbitMQ.
 
 ---
 

@@ -1,7 +1,7 @@
 import { type FormEventHandler, useState } from "react"
 import { GlassButton, GlassCard, GlassInput } from "../../components/ui/GlassUI"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { clientSignup } from "../../services/apiClient"
+import { acceptInvitationSignup } from "../../services/apiClient"
 
 export default function ClientSignup() {
   const [searchParams] = useSearchParams()
@@ -20,7 +20,7 @@ export default function ClientSignup() {
     setLoading(true)
 
     try {
-      await clientSignup({
+      await acceptInvitationSignup({
         email,
         password,
         confirmPassword,

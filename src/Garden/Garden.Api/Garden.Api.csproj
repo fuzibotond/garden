@@ -19,6 +19,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
 
@@ -29,6 +30,7 @@
     <ProjectReference Include="..\Garden.Modules.Clients\Garden.Modules.Clients.csproj" />
     <ProjectReference Include="..\Garden.Modules.Gardeners\Garden.Modules.Gardeners.csproj" />
     <ProjectReference Include="..\Garden.Modules.Identity\Garden.Modules.Identity.csproj" />
+    <ProjectReference Include="..\Garden.Modules.Materials\Garden.Modules.Materials.csproj" />
     <ProjectReference Include="..\Garden.Modules.Notifications\Garden.Modules.Notifications.csproj" />
     <ProjectReference Include="..\Garden.Modules.Scheduling\Garden.Modules.Scheduling.csproj" />
     <ProjectReference Include="..\Garden.Modules.Tasks\Garden.Modules.Tasks.csproj" />

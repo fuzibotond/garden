@@ -1,3 +1,4 @@
+@import "tailwindcss";
 /* Global theme inspired by plant shop screenshots */
 
 :root {
@@ -464,6 +465,130 @@ a:hover {
 }
 
 .glass-ui-input__help {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.glass-ui-select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.glass-ui-select-wrap--full {
+  width: 100%;
+}
+
+.glass-ui-select__label {
+  font-size: 13px;
+  color: rgba(247, 248, 244, 0.9);
+}
+
+.glass-ui-select-shell {
+  position: relative;
+}
+
+.glass-ui-select-trigger {
+  width: 100%;
+  border-radius: 999px;
+  border: 1px solid rgba(190, 255, 171, 0.32);
+  background:
+    linear-gradient(145deg, rgba(16, 45, 27, 0.92), rgba(5, 18, 10, 0.92));
+  color: #f7f8f4;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 10px 44px 10px 14px;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.glass-ui-select-trigger:hover {
+  border-color: rgba(190, 255, 171, 0.48);
+}
+
+.glass-ui-select-trigger:focus {
+  border-color: rgba(134, 239, 172, 0.72);
+  box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.16);
+}
+
+.glass-ui-select-trigger[data-placeholder] {
+  color: rgba(192, 199, 184, 0.9);
+}
+
+.glass-ui-select-trigger:disabled,
+.glass-ui-select-trigger[data-disabled] {
+  opacity: 0.64;
+  cursor: not-allowed;
+}
+
+.glass-ui-select-content {
+  z-index: 50;
+  min-width: var(--radix-select-trigger-width);
+  border-radius: 18px;
+  border: 1px solid rgba(190, 255, 171, 0.32);
+  background:
+    linear-gradient(145deg, rgba(16, 45, 27, 0.95), rgba(5, 18, 10, 0.95));
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow: 0 16px 46px rgba(0, 0, 0, 0.58);
+}
+
+.glass-ui-select-viewport {
+  padding: 6px;
+}
+
+.glass-ui-select-item {
+  position: relative;
+  border-radius: 12px;
+  padding: 9px 32px 9px 12px;
+  color: #f7f8f4;
+  font-size: 14px;
+  line-height: 1;
+  outline: none;
+  user-select: none;
+}
+
+.glass-ui-select-item[data-highlighted] {
+  background: rgba(190, 255, 171, 0.16);
+}
+
+.glass-ui-select-item[data-disabled] {
+  opacity: 0.5;
+}
+
+.glass-ui-select-item-indicator {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(190, 255, 171, 0.95);
+}
+
+.glass-ui-select-chevron {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 10px;
+  border-right: 2px solid rgba(247, 248, 244, 0.9);
+  border-bottom: 2px solid rgba(247, 248, 244, 0.9);
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.glass-ui-select-root--error .glass-ui-select-trigger {
+  border-color: rgba(248, 113, 113, 0.7);
+}
+
+.glass-ui-select__error {
+  margin: 0;
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.glass-ui-select__help {
   margin: 0;
   color: var(--text-muted);
   font-size: 12px;

@@ -9,7 +9,7 @@ public static class UpdateMyProfileEndpoint
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        app.MapPut("/auth/update", [Authorize] async (
+        app.MapPut("/auth/profile", [Authorize] async (
             UpdateMyProfileRequest request,
             UpdateMyProfileHandler handler,
             CancellationToken cancellationToken) =>

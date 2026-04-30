@@ -1,3 +1,4 @@
+using Garden.BuildingBlocks.Events;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
 using Garden.BuildingBlocks.Services;
 using Microsoft.AspNetCore.Identity;
@@ -141,12 +142,4 @@ public class InvitationService : IInvitationService
         var hash = sha.ComputeHash(bytes);
         return Convert.ToHexString(hash);
     }
-}
-
-public record InvitationCreatedEvent
-{
-    public Guid GardenerId { get; init; }
-    public string Email { get; init; } = default!;
-    public string Token { get; init; } = default!;
-    public DateTime ExpiresAtUtc { get; init; }
 }

@@ -1,14 +1,146 @@
+name: garden-local
+
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: garden-sqlserver
     environment:
       ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "LocalStrongPassword123!"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:-LocalStrongPassword123!}
     ports:
-      - "1433:1433"
+      - "${SQLSERVER_PORT:-1433}:1433"
     volumes:
       - sqlserver-data:/var/opt/mssql
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -Q \"SELECT 1\""
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - garden-local
+
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    hostname: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - garden-local
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "${SMTP_PORT:-1025}:1025"
+      - "${MAILHOG_UI_PORT:-8025}:8025"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8025 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - garden-local
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Garden/Garden.Api/Dockerfile
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Admin__Email: ${ADMIN_EMAIL:-admin@admin.com}
+      Jwt__Key: ${JWT_KEY:-dev-super-long-secret-key-32-characters-minimum}
+      Jwt__Issuer: ${JWT_ISSUER:-Garden.Api}
+      Jwt__Audience: ${JWT_AUDIENCE:-Garden.App}
+      ConnectionStrings__GardenDb: Server=sqlserver,1433;Database=${SQLSERVER_DATABASE:-GardenDb};User Id=sa;Password=${MSSQL_SA_PASSWORD:-LocalStrongPassword123!};TrustServerCertificate=True;
+      RabbitMq__HostName: rabbitmq
+      RabbitMq__Port: 5672
+      RabbitMq__UserName: ${RABBITMQ_USER:-guest}
+      RabbitMq__Password: ${RABBITMQ_PASSWORD:-guest}
+      RabbitMq__ExchangeName: ${RABBITMQ_EXCHANGE:-garden.events}
+      Smtp__Host: mailhog
+      Smtp__Port: 1025
+      Smtp__FromAddress: ${SMTP_FROM_ADDRESS:-noreply@garden.local}
+      Smtp__EnableSsl: "false"
+      Frontend__BaseUrl: ${FRONTEND_BASE_URL:-http://localhost:8082}
+      FileStorage__BaseUrl: http://localhost:${API_PORT:-5055}/uploads
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mailhog:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-5055}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - garden-local
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    environment:
+      # Runtime: nginx proxies /api/* and /uploads/* to this backend URL
+      BACKEND_URL: http://api:8080
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-8082}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:80 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - garden-local
+
+  dozzle:
+    image: amir20/dozzle:latest
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_NO_ANALYTICS: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "${DOZZLE_PORT:-9999}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/healthcheck || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - garden-local
 
 volumes:
   sqlserver-data:
+  rabbitmq-data:
+
+networks:
+  garden-local:
+    driver: bridge

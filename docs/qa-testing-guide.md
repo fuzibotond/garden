@@ -28,6 +28,22 @@ Expected response:
 
 status: ok
 
+For local development, use the root scripts instead:
+
+```powershell
+.\scripts\check-health.ps1
+.\scripts\run-smoke-tests.ps1
+```
+
+The local smoke script verifies:
+
+- API startup
+- frontend startup
+- SQL Server connectivity
+- RabbitMQ connectivity
+- authentication reachability
+- protected endpoint anonymous rejection
+
 ---
 
 # Authentication Tests

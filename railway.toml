@@ -1,0 +1,13 @@
+# Railway config for the Garden API service.
+# In the Railway dashboard, set this service's Root Directory to / (repo root).
+
+[build]
+  dockerfilePath = "src/Garden/Garden.Api/Dockerfile"
+
+[deploy]
+  # Railway injects PORT at runtime. ASP.NET Core reads ASPNETCORE_HTTP_PORTS.
+  startCommand = "sh -c 'ASPNETCORE_HTTP_PORTS=${PORT:-8080} dotnet Garden.Api.dll'"
+  healthcheckPath = "/health/live"
+  healthcheckTimeout = 300
+  restartPolicyType = "on_failure"
+  restartPolicyMaxRetries = 5

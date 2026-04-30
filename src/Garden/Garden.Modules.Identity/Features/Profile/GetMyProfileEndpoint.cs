@@ -9,7 +9,7 @@ public static class GetMyProfileEndpoint
 {
     public static void Map(IEndpointRouteBuilder app)
     {
-        app.MapGet("/auth/me", [Authorize] async (
+        app.MapGet("/auth/profile", [Authorize] async (
             GetMyProfileHandler handler,
             CancellationToken cancellationToken) =>
         {

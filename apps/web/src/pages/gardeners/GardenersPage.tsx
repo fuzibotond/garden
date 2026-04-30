@@ -13,6 +13,17 @@ import {
 } from "../../services/apiClient"
 import { getAccessToken, getCurrentUser, hasRole } from "../../lib/auth"
 
+function isAlreadyDeletedError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const message = err.message.toLowerCase()
+  return (
+    message.includes("not found")
+    || message.includes("already deleted")
+    || message.includes("no longer exists")
+    || message.includes("does not exist")
+  )
+}
+
 export default function GardenersPage() {
   const token = getAccessToken()
   const user = getCurrentUser()
@@ -36,6 +47,7 @@ export default function GardenersPage() {
   const [editForm, setEditForm] = useState<UpdateGardenerRequest>({})
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [deletingGardenerId, setDeletingGardenerId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!token || !isAdmin) return
@@ -92,12 +104,20 @@ export default function GardenersPage() {
 
   async function handleDelete(gardener: AdminGardenerDto) {
     if (!token) return
+    if (deletingGardenerId === gardener.gardenerId) return
     if (!window.confirm(`Delete gardener "${gardener.contactName || gardener.email}"?`)) return
+    setDeletingGardenerId(gardener.gardenerId)
     try {
       await deleteAdminGardener(token, gardener.gardenerId)
       void load()
     } catch (err) {
+      if (isAlreadyDeletedError(err)) {
+        void load()
+        return
+      }
       setError(err instanceof Error ? err.message : "Failed to delete gardener")
+    } finally {
+      setDeletingGardenerId((current) => (current === gardener.gardenerId ? null : current))
     }
   }
 
@@ -240,8 +260,9 @@ export default function GardenersPage() {
                               onClick={() => handleDelete(g)}
                               size="xs"
                               variant="danger"
+                              disabled={deletingGardenerId === g.gardenerId}
                             >
-                              Delete
+                              {deletingGardenerId === g.gardenerId ? "Deleting..." : "Delete"}
                             </GlassButton>
                           </td>
                         </tr>

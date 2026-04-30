@@ -14,6 +14,7 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
   const user = getCurrentUser()
   const isAdmin = hasRole(user, "Admin")
   const isGardener = hasRole(user, "Gardener")
+  const isClient = hasRole(user, "Client")
 
   async function handleLogout() {
     const token = localStorage.getItem("accessToken")
@@ -50,6 +51,12 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               <NavLink to="/admin/gardeners" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Gardeners
               </NavLink>
+              <NavLink to="/admin/tools" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Admin Tools
+              </NavLink>
+              <NavLink to="/admin/monitor" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                System Monitor
+              </NavLink>
             </>
           )}
 
@@ -63,6 +70,32 @@ export default function AdminLayout({ title, children }: AdminLayoutProps) {
               </NavLink>
               <NavLink to="/admin/tasks" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
                 Tasks
+              </NavLink>
+              <NavLink to="/admin/materials" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Materials
+              </NavLink>
+              <NavLink to="/gardener/scheduling" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Schedule
+              </NavLink>
+              <NavLink to="/gardener/questions" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Questions
+              </NavLink>
+            </>
+          )}
+
+          {isClient && !isAdmin && !isGardener && (
+            <>
+              <NavLink to="/admin/jobs" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Jobs
+              </NavLink>
+              <NavLink to="/admin/tasks" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Tasks
+              </NavLink>
+              <NavLink to="/client/scheduling" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Schedule
+              </NavLink>
+              <NavLink to="/client/questions" className={({ isActive }) => `admin-nav-link${isActive ? " active" : ""}`}>
+                Questions
               </NavLink>
             </>
           )}

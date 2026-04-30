@@ -36,6 +36,10 @@ namespace Garden.BuildingBlocks.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("ExpoPushToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<DateTime?>("LastLogoutUtc")
                         .HasColumnType("datetime2");
 
@@ -96,6 +100,10 @@ namespace Garden.BuildingBlocks.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("ExpoPushToken")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<DateTime?>("LastLogoutUtc")
                         .HasColumnType("datetime2");
 
@@ -114,6 +122,26 @@ namespace Garden.BuildingBlocks.Migrations
                         .IsUnique();
 
                     b.ToTable("Gardeners", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.GardenerTaskTypeRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TaskTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GardenerId", "TaskTypeId")
+                        .IsUnique();
+
+                    b.ToTable("GardenerTaskTypes", (string)null);
                 });
 
             modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.InvitationRecord", b =>
@@ -152,6 +180,390 @@ namespace Garden.BuildingBlocks.Migrations
                     b.HasIndex("GardenerId");
 
                     b.ToTable("Invitations", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.JobGardenerRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId", "GardenerId")
+                        .IsUnique();
+
+                    b.ToTable("JobGardeners", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.JobRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ClosedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("InvoiceNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.ToTable("Jobs", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.MaterialRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AmountType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal>("PricePerAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GardenerId");
+
+                    b.ToTable("Materials", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskAnswerMediaRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AnswerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MediaUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AnswerId");
+
+                    b.ToTable("TaskAnswerMedia", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskAnswerRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AnswerText")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("TaskAnswers", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskMaterialRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MaterialId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("SnapshotAmountType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SnapshotName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<decimal?>("SnapshotPricePerAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("UsedQuantity")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId", "MaterialId")
+                        .IsUnique();
+
+                    b.ToTable("TaskMaterials", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskQuestionMediaRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("MediaType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("MediaUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<Guid>("QuestionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UploadedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("TaskQuestionMedia", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskQuestionRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PredefinedOptions")
+                        .HasMaxLength(4096)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("QuestionText")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<string>("QuestionType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("GardenerId");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("TaskQuestions", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("ActualTimeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<int?>("EstimatedTimeMinutes")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("FinishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime?>("StartedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TaskTypeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("WagePerHour")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobId");
+
+                    b.HasIndex("TaskTypeId");
+
+                    b.ToTable("Tasks", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskScheduleRequestRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeclinedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GardenerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ProposedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ScheduledAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
+
+                    b.HasIndex("GardenerId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TaskId", "ClientId")
+                        .IsUnique();
+
+                    b.ToTable("TaskScheduleRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Garden.BuildingBlocks.Infrastructure.Persistence.TaskTypeRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("TaskTypes", (string)null);
                 });
 
             modelBuilder.Entity("RefreshTokenRecord", b =>

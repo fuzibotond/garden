@@ -2,9 +2,9 @@
 
 This guide explains how developers run the Garden platform locally.
 
-The development environment is completely isolated from QA.
+The development environment is completely isolated from QA and now uses one root launcher for the whole local stack.
 
-DEV API: http://localhost:80  
+DEV API: http://localhost:5055  
 QA API: http://localhost:8080 (via port-forward)
 
 DEV database: Docker SQL Server
@@ -18,7 +18,8 @@ Install:
 - Git
 - .NET SDK 10
 - Docker Desktop
-- kubectl
+- Node.js 20+
+- PowerShell 5.1+
 - Visual Studio or VS Code
 
 Verify installation:
@@ -26,7 +27,7 @@ Verify installation:
 git --version  
 dotnet --version  
 docker version  
-kubectl version
+node --version
 
 ---
 
@@ -36,77 +37,107 @@ git clone <repo>
 cd garden
 git checkout develop
 
-Explanation:
-
 Developers work on `develop`.
 
 `main` is reserved for QA deployments.
 
 ---
 
-# 3. Configure local secrets
+# 3. Configure local environment files
 
-Copy the template:
+Copy the root templates:
 
-cp .env.template .env.local
+```powershell
+Copy-Item .env.example .env
+Copy-Item .env.local.example .env.local
+```
 
-Edit `.env.local`.
-
-Example:
-
-Jwt__Key=dev-super-long-secret-key-32-characters-minimum
-ConnectionStrings__GardenDb=Server=localhost,1433;Database=GardenDb;User Id=sa;Password=LocalStrongPassword123!;TrustServerCertificate=True
+Edit `.env.local` only when you need overrides.
 
 Important:
 
 - `.env.local` **must never be committed**
-- Secrets are loaded using **DotNetEnv**
+- The root scripts prefer `.env.local` over `.env`
+- `src/Garden/Garden.Api/.env.local` remains optional when you run the API outside Docker
 
 ---
 
-# 4. Start local SQL Server
+# 4. Start the full local stack
 
-docker compose up -d
+```powershell
+.\scripts\launch-local.ps1
+```
 
-This starts SQL Server in Docker.
+This starts:
 
-Database port:
+- SQL Server
+- RabbitMQ with management UI
+- MailHog for SMTP capture
+- ASP.NET Core API
+- React web app
+- Dozzle log viewer
 
-1433
+To also start Expo in a second PowerShell window:
 
----
-
-# 5. Run the API
-
-dotnet run --urls=http://localhost:80
-
-Open Swagger:
-
-http://localhost:80/swagger
-
-The API will automatically run EF Core migrations on startup.
-
----
-
-# 6. Development workflow
-
-Create a feature branch:
-
-git checkout develop
-git pull
-git checkout -b feature/my-feature
-
-Push:
-
-git push origin feature/my-feature
-
-Create Pull Request → `develop`
-
-CI pipeline will run automatically.
+```powershell
+.\scripts\launch-local.ps1 -StartMobile
+```
 
 ---
 
-# 7. Important development notes
+# 5. Service URLs
+
+- API: http://localhost:5055
+- Swagger: http://localhost:5055/swagger
+- API health: http://localhost:5055/health/live
+- API readiness: http://localhost:5055/health/ready
+- API metrics: http://localhost:5055/metrics
+- Web: http://localhost:8082
+- RabbitMQ: http://localhost:15672
+- MailHog: http://localhost:8025
+- Dozzle: http://localhost:9999
+
+---
+
+# 6. Check what is working
+
+```powershell
+.\scripts\check-health.ps1
+.\scripts\run-smoke-tests.ps1
+```
+
+The health script shows:
+
+- service URL
+- current state
+- current health
+- worker status
+- last test status
+- last smoke-test status
+
+---
+
+# 7. Stop, restart, and inspect logs
+
+```powershell
+.\scripts\stop-local.ps1
+.\scripts\restart-local.ps1
+.\scripts\show-logs.ps1 -Follow
+```
+
+---
+
+# 8. Run tests
+
+```powershell
+.\scripts\run-all-tests.ps1
+```
+
+This runs backend, web, and mobile tests and stores the last test result for the status script.
+
+---
+
+# 9. Important development notes
 
 JWT keys must be **at least 32 characters**.
 
@@ -115,3 +146,7 @@ Short keys will break token generation.
 Example error:
 
 IDX10720: key size must be greater than 256 bits
+
+Common local problem:
+
+- A locally running `Garden.Api` on port `5055` will shadow the container and make health checks fail. Stop it before using the root launcher.

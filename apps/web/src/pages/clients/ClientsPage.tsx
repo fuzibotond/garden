@@ -19,6 +19,17 @@ import {
 
 type ClientRow = AdminClientDto | GardenerClientDto
 
+function isAlreadyDeletedError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  const message = err.message.toLowerCase()
+  return (
+    message.includes("not found")
+    || message.includes("already deleted")
+    || message.includes("no longer exists")
+    || message.includes("does not exist")
+  )
+}
+
 export default function ClientsPage() {
   const token = getAccessToken()
   const user = getCurrentUser()
@@ -45,6 +56,7 @@ export default function ClientsPage() {
   const [editForm, setEditForm] = useState<UpdateClientRequest>({})
   const [submitLoading, setSubmitLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     if (!token || !canManage) return
@@ -121,8 +133,10 @@ export default function ClientsPage() {
 
   async function handleDelete(client: ClientRow) {
     if (!token) return
-    if (!window.confirm(`Delete client "${client.fullName}"?`)) return
     const id = getClientId(client)
+    if (deletingClientId === id) return
+    if (!window.confirm(`Delete client "${client.fullName}"?`)) return
+    setDeletingClientId(id)
     try {
       if (isAdmin) {
         await deleteAdminClient(token, id)
@@ -131,7 +145,13 @@ export default function ClientsPage() {
       }
       void load()
     } catch (err) {
+      if (isAlreadyDeletedError(err)) {
+        void load()
+        return
+      }
       setError(err instanceof Error ? err.message : "Failed to delete client")
+    } finally {
+      setDeletingClientId((current) => (current === id ? null : current))
     }
   }
 
@@ -316,8 +336,14 @@ export default function ClientsPage() {
                         <GlassButton type="button" onClick={() => openEdit(c)} size="xs" variant="secondary">
                           Edit
                         </GlassButton>
-                        <GlassButton type="button" onClick={() => handleDelete(c)} size="xs" variant="danger">
-                          Delete
+                        <GlassButton
+                          type="button"
+                          onClick={() => handleDelete(c)}
+                          size="xs"
+                          variant="danger"
+                          disabled={deletingClientId === getClientId(c)}
+                        >
+                          {deletingClientId === getClientId(c) ? "Deleting..." : "Delete"}
                         </GlassButton>
                       </td>
                     </tr>

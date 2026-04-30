@@ -1,0 +1,11 @@
+# Railway config for the Garden Web (nginx) service.
+# In the Railway dashboard, set this service's Root Directory to apps/web.
+
+[build]
+  dockerfilePath = "Dockerfile"
+
+[deploy]
+  healthcheckPath = "/"
+  healthcheckTimeout = 60
+  restartPolicyType = "on_failure"
+  restartPolicyMaxRetries = 5

@@ -13,8 +13,18 @@ public static class ModuleExtensions
         services.AddSingleton(smtpOptions);
         services.AddSingleton<IEmailService, SmtpEmailService>();
 
-        // Register background consumer for invitation emails
+        // Register Expo Push Notification service
+        services.AddHttpClient();
+        services.AddSingleton<IExpoPushNotificationService, ExpoPushNotificationService>();
+
+        // Register background consumers for email notifications
         services.AddHostedService<InvitationEmailConsumer>();
+        services.AddHostedService<ScheduleRequestEmailConsumer>();
+        services.AddHostedService<ScheduleStatusChangedConsumer>();
+
+        // Register background consumers for question notifications
+        services.AddHostedService<TaskQuestionCreatedConsumer>();
+        services.AddHostedService<TaskQuestionAnsweredConsumer>();
 
         return services;
     }

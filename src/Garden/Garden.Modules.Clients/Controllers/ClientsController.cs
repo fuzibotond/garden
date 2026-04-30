@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Garden.Modules.Clients.Controllers;
 
 [ApiController]
-[Route("api/gardener/clients")]
+[Route("api/clients")]
 [Authorize(Roles = "Gardener")]
 public class ClientsController : ControllerBase
 {

@@ -1,12 +1,15 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: garden-api
-spec:
-  selector:
-    app: garden-api
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 8080
-  type: ClusterIP
+.git
+.github
+.vs
+**/bin
+**/obj
+**/dist
+**/coverage
+**/TestResults
+**/node_modules
+**/.expo
+**/.next
+**/.turbo
+**/.env
+**/.env.local
+docker-compose*.yml
