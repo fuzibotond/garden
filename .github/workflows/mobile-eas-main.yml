@@ -1,0 +1,45 @@
+name: Mobile EAS Build (Main)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile-app/**'
+      - '.github/workflows/mobile-eas-main.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: mobile-eas-main
+  cancel-in-progress: true
+
+jobs:
+  build-preview-android:
+    name: Build Android (Preview)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile-app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: apps/mobile-app/package-lock.json
+
+      - name: Setup Expo and EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Android preview
+        env:
+          EXPO_PUBLIC_API_URL: ${{ secrets.MOBILE_API_BASE_URL }}
+        run: eas build --platform android --profile preview --non-interactive
