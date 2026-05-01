@@ -17,14 +17,14 @@ server {
     gzip_types text/plain text/css application/javascript application/json image/svg+xml;
     gzip_min_length 1024;
 
-    # SPA fallback â€” all non-file routes return index.html
+    # SPA fallback Ã¢â‚¬â€ all non-file routes return index.html
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy /api/* â†’ backend (strips /api prefix)
+    # Proxy /api/* â†’ backend (keeps full /api/ prefix)
     location /api/ {
-        proxy_pass ${BACKEND_URL}/;
+        proxy_pass ${BACKEND_URL};
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -33,7 +33,7 @@ server {
         proxy_read_timeout 60s;
     }
 
-    # Proxy /uploads/* â†’ backend (keeps /uploads prefix)
+    # Proxy /uploads/* Ã¢â€ â€™ backend (keeps /uploads prefix)
     location /uploads/ {
         proxy_pass ${BACKEND_URL}/uploads/;
         proxy_http_version 1.1;
