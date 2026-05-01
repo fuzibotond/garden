@@ -216,10 +216,10 @@ function decodeJwtPayload(token: string): Record<string, unknown> {
 }
 
 export const login = (email: string, password: string) =>
-  request<{ accessToken: string }>('/auth/login', { method: 'POST', body: { email, password } })
+  request<{ accessToken: string }>('/api/auth/login', { method: 'POST', body: { email, password } })
 
 export const getMyProfile = (token: string) =>
-  request<Record<string, unknown>>('/auth/profile', { token }).then((raw) => {
+  request<Record<string, unknown>>('/api/auth/profile', { token }).then((raw) => {
     const payload = decodeJwtPayload(token)
     const role =
       (payload['role'] as string | undefined) ??
@@ -235,7 +235,7 @@ export const getMyProfile = (token: string) =>
   })
 
 export const logout = (token: string) =>
-  request<void>('/auth/logout', { method: 'POST', token })
+  request<void>('/api/auth/logout', { method: 'POST', token })
 
 export const registerPushToken = (token: string, expoPushToken: string) =>
   request<void>('/api/users/push-token', { method: 'POST', body: { expoPushToken }, token })
