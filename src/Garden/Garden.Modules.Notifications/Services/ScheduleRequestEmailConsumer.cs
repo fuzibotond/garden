@@ -62,8 +62,7 @@ public sealed class ScheduleRequestEmailConsumer : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ScheduleRequestEmailConsumer encountered an error");
-            throw;
+            _logger.LogError(ex, "ScheduleRequestEmailConsumer encountered an error and will stop");
         }
     }
 

@@ -56,8 +56,7 @@ public sealed class ScheduleStatusChangedConsumer : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "ScheduleStatusChangedConsumer encountered an error");
-            throw;
+            _logger.LogError(ex, "ScheduleStatusChangedConsumer encountered an error and will stop");
         }
     }
 

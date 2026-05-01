@@ -54,8 +54,7 @@ public sealed class InvitationEmailConsumer : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "InvitationEmailConsumer encountered an error");
-            throw;
+            _logger.LogError(ex, "InvitationEmailConsumer encountered an error and will stop");
         }
     }
 
