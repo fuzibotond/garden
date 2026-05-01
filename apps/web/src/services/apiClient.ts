@@ -70,7 +70,7 @@ export type ClientSignupResponse = {
 }
 
 export function login(body: LoginRequest) {
-  return apiRequest<LoginResponse>("/auth/login", {
+  return apiRequest<LoginResponse>("/api/auth/login", {
     method: "POST",
     body,
   })
@@ -102,7 +102,7 @@ export type RegisterGardenerRequest = {
 }
 
 export function registerGardener(body: RegisterGardenerRequest) {
-  return apiRequest<unknown>("/auth/register/gardener", {
+  return apiRequest<unknown>("/api/auth/register/gardener", {
     method: "POST",
     body,
   })
@@ -116,7 +116,7 @@ export type RegisterClientRequest = {
 }
 
 export function registerClient(body: RegisterClientRequest) {
-  return apiRequest<unknown>("/auth/register/client", {
+  return apiRequest<unknown>("/api/auth/register/client", {
     method: "POST",
     body,
   })
@@ -128,7 +128,7 @@ export type AdminCreateClientRequest = {
 }
 
 export function adminCreateClient(body: AdminCreateClientRequest, adminToken: string) {
-  return apiRequest<unknown>("/auth/admin/create-client", {
+  return apiRequest<unknown>("/api/auth/admin/create-client", {
     method: "POST",
     body,
     token: adminToken,
@@ -144,7 +144,7 @@ export type Profile = {
 }
 
 export function getMyProfile(token: string) {
-  return apiRequest<Profile>("/auth/profile", {
+  return apiRequest<Profile>("/api/auth/profile", {
     method: "GET",
     token,
   })
@@ -156,7 +156,7 @@ export type UpdateProfileRequest = {
 }
 
 export function updateMyProfile(body: UpdateProfileRequest, token: string) {
-  return apiRequest<Profile>("/auth/profile", {
+  return apiRequest<Profile>("/api/auth/profile", {
     method: "PUT",
     body,
     token,
@@ -164,14 +164,14 @@ export function updateMyProfile(body: UpdateProfileRequest, token: string) {
 }
 
 export function deleteMyProfile(token: string) {
-  return apiRequest<void>("/auth/profile", {
+  return apiRequest<void>("/api/auth/profile", {
     method: "DELETE",
     token,
   })
 }
 
 export function logout(token: string) {
-  return apiRequest<void>("/auth/logout", {
+  return apiRequest<void>("/api/auth/logout", {
     method: "POST",
     token,
   })

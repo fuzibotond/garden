@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 
 # VITE_API_URL is baked in at build time; nginx will proxy /api to the backend
-ARG VITE_API_URL=/api
+ARG VITE_API_URL=
 ENV VITE_API_URL=${VITE_API_URL}
 
 RUN npm run build
