@@ -184,22 +184,21 @@ app.Use(async (context, next) =>
     }
 });
 
+// Ensure uploads directory exists and serve static files in all environments
+var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
+Directory.CreateDirectory(uploadsPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
-
-    // Ensure uploads directory exists before configuring static files
-    var uploadsPath = Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads");
-    Directory.CreateDirectory(uploadsPath);
-
-    // Enable static files in development for local file storage
-    app.UseStaticFiles(new StaticFileOptions
-    {
-        FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(uploadsPath),
-        RequestPath = "/uploads"
-    });
 }
 
 app.UseHttpsRedirection();
