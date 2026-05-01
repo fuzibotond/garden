@@ -1,4 +1,6 @@
 #!/bin/sh
+export PORT="${PORT:-80}"
+
 # Default to the API's internal Railway hostname when BACKEND_URL is not set.
 export BACKEND_URL="${BACKEND_URL:-http://garden-api.railway.internal:8080}"
 
@@ -7,7 +9,7 @@ case "$BACKEND_URL" in
   *:) export BACKEND_URL="${BACKEND_URL}8080" ;;
 esac
 
-# Substitute only BACKEND_URL â€” port 80 is hardcoded in nginx config.
-envsubst '${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
+# Substitute PORT and BACKEND_URL only — avoids clobbering nginx vars like $uri.
+envsubst '${PORT} ${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec nginx -g 'daemon off;'
