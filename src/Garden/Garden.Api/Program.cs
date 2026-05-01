@@ -241,8 +241,9 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine("Database migration completed.");
 
         var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<GardenerRecord>>();
-        const string adminEmail = "admin@admin.com";
-        const string adminPassword = "P@ssw0rd!"; // change to a strong password
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var adminEmail = config["Admin:Email"] ?? "admin@admin.com";
+        var adminPassword = config["Admin:Password"] ?? "P@ssw0rd!";
         if (!dbContext.Gardeners.Any(g => g.Email == adminEmail))
         {
             var admin = new GardenerRecord
