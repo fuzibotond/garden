@@ -13,7 +13,7 @@ using System.Text.Json;
 
 namespace Garden.Modules.Notifications.Services;
 
-public class TaskQuestionCreatedConsumer : IHostedService
+public class TaskQuestionCreatedConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly RabbitMqOptions _rabbitOptions;
@@ -33,48 +33,67 @@ public class TaskQuestionCreatedConsumer : IHostedService
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var factory = new ConnectionFactory
+        try
         {
-            HostName = _rabbitOptions.HostName,
-            Port = _rabbitOptions.Port,
-            UserName = _rabbitOptions.UserName,
-            Password = _rabbitOptions.Password
-        };
-
-        _connection = await factory.CreateConnectionAsync(cancellationToken);
-        _channel = await _connection.CreateChannelAsync(options: null);
-
-        await _channel.ExchangeDeclareAsync(_rabbitOptions.ExchangeName, ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: cancellationToken);
-        await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: cancellationToken);
-        await _channel.QueueBindAsync(QueueName, _rabbitOptions.ExchangeName, RoutingKey, cancellationToken: cancellationToken);
-
-        var consumer = new AsyncEventingBasicConsumer(_channel);
-        consumer.ReceivedAsync += async (model, ea) =>
-        {
-            try
+            var factory = new ConnectionFactory
             {
-                var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-                var @event = JsonSerializer.Deserialize<TaskQuestionCreatedEvent>(message);
+                HostName = _rabbitOptions.HostName,
+                Port = _rabbitOptions.Port,
+                UserName = _rabbitOptions.UserName,
+                Password = _rabbitOptions.Password
+            };
 
-                if (@event != null)
+            _connection = await factory.CreateConnectionAsync(stoppingToken);
+            _channel = await _connection.CreateChannelAsync(options: null);
+
+            await _channel.ExchangeDeclareAsync(_rabbitOptions.ExchangeName, ExchangeType.Topic, durable: true, autoDelete: false, cancellationToken: stoppingToken);
+            await _channel.QueueDeclareAsync(QueueName, durable: true, exclusive: false, autoDelete: false, cancellationToken: stoppingToken);
+            await _channel.QueueBindAsync(QueueName, _rabbitOptions.ExchangeName, RoutingKey, cancellationToken: stoppingToken);
+
+            var consumer = new AsyncEventingBasicConsumer(_channel);
+            consumer.ReceivedAsync += async (model, ea) =>
+            {
+                try
                 {
-                    await HandleEventAsync(@event);
+                    var body = ea.Body.ToArray();
+                    var message = Encoding.UTF8.GetString(body);
+                    var @event = JsonSerializer.Deserialize<TaskQuestionCreatedEvent>(message);
+
+                    if (@event != null)
+                    {
+                        await HandleEventAsync(@event);
+                    }
+
+                    await _channel.BasicAckAsync(ea.DeliveryTag, false);
                 }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error processing TaskQuestionCreatedEvent");
+                    await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
+                }
+            };
 
-                await _channel.BasicAckAsync(ea.DeliveryTag, false);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing TaskQuestionCreatedEvent");
-                await _channel.BasicNackAsync(ea.DeliveryTag, false, true);
-            }
-        };
+            await _channel.BasicConsumeAsync(QueueName, autoAck: false, consumer: consumer, cancellationToken: stoppingToken);
+            _logger.LogInformation("TaskQuestionCreatedConsumer started listening on queue: {QueueName}", QueueName);
 
-        await _channel.BasicConsumeAsync(QueueName, autoAck: false, consumer: consumer, cancellationToken: cancellationToken);
-        _logger.LogInformation("TaskQuestionCreatedConsumer started listening on queue: {QueueName}", QueueName);
+            await Task.Delay(Timeout.Infinite, stoppingToken);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("TaskQuestionCreatedConsumer is stopping");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "TaskQuestionCreatedConsumer encountered an error and will stop");
+        }
+        finally
+        {
+            if (_channel != null) { await _channel.CloseAsync(); _channel.Dispose(); }
+            if (_connection != null) { await _connection.CloseAsync(); _connection.Dispose(); }
+            _logger.LogInformation("TaskQuestionCreatedConsumer stopped");
+        }
     }
 
     private async Task HandleEventAsync(TaskQuestionCreatedEvent @event)
@@ -114,20 +133,4 @@ public class TaskQuestionCreatedConsumer : IHostedService
         }
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
-    {
-        if (_channel != null)
-        {
-            await _channel.CloseAsync(cancellationToken);
-            _channel.Dispose();
-        }
-
-        if (_connection != null)
-        {
-            await _connection.CloseAsync(cancellationToken);
-            _connection.Dispose();
-        }
-
-        _logger.LogInformation("TaskQuestionCreatedConsumer stopped");
-    }
 }
