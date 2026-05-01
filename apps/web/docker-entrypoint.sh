@@ -7,7 +7,7 @@ case "$BACKEND_URL" in
   *:) export BACKEND_URL="${BACKEND_URL}8080" ;;
 esac
 
-# Substitute only BACKEND_URL — port 80 is hardcoded in nginx config.
+# Substitute only BACKEND_URL â€” port 80 is hardcoded in nginx config.
 envsubst '${BACKEND_URL}' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec nginx -g 'daemon off;'
