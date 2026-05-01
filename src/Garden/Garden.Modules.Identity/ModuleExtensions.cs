@@ -72,13 +72,14 @@ public static class ModuleExtensions
 
     public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
     {
-        AuthLoginEndpoint.Map(app);
-        RegisterGardenerEndpoint.Map(app);
-        CreateClientEndpoint.Map(app);
-        Features.Profile.GetMyProfileEndpoint.Map(app);
-        Features.Profile.UpdateMyProfileEndpoint.Map(app);
-        Features.Profile.DeleteGardenerEndpoint.Map(app);
-        Features.Auth.LogoutEndpoint.Map(app);
+        var group = app.MapGroup("/api");
+        AuthLoginEndpoint.Map(group);
+        RegisterGardenerEndpoint.Map(group);
+        CreateClientEndpoint.Map(group);
+        Features.Profile.GetMyProfileEndpoint.Map(group);
+        Features.Profile.UpdateMyProfileEndpoint.Map(group);
+        Features.Profile.DeleteGardenerEndpoint.Map(group);
+        Features.Auth.LogoutEndpoint.Map(group);
         return app;
     }
 }

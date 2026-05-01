@@ -102,7 +102,7 @@ export type RegisterGardenerRequest = {
 }
 
 export function registerGardener(body: RegisterGardenerRequest) {
-  return apiRequest<unknown>("/api/auth/register/gardener", {
+  return apiRequest<unknown>("/api/auth/register-gardener", {
     method: "POST",
     body,
   })
@@ -116,7 +116,7 @@ export type RegisterClientRequest = {
 }
 
 export function registerClient(body: RegisterClientRequest) {
-  return apiRequest<unknown>("/api/auth/register/client", {
+  return apiRequest<unknown>("/api/auth/register-client", {
     method: "POST",
     body,
   })
