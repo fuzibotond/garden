@@ -1,0 +1,7 @@
+{
+  "profiles": {
+    "Garden.Api.Tests": {
+      "commandName": "Project"
+    }
+  }
+}

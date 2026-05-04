@@ -1,18 +1,17 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
-using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Garden.Modules.Identity.Features.Profile;
+namespace Garden.Modules.Gardeners.Features.DeleteGardener;
 
 public class DeleteGardenerHandler
 {
     private readonly GardenDbContext _dbContext;
-    private readonly Garden.BuildingBlocks.Services.ICurrentUser _currentUser;
+    private readonly ICurrentUser _currentUser;
 
     public DeleteGardenerHandler(
         GardenDbContext dbContext,
-        Garden.BuildingBlocks.Services.ICurrentUser currentUser)
+        ICurrentUser currentUser)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
@@ -28,12 +27,7 @@ public class DeleteGardenerHandler
 
         if (gardener is null)
             throw new InvalidOperationException("Gardener profile was not found.");
-        // If the user logged out after the token was issued, reject the token
-        if (gardener.LastLogoutUtc is not null && _currentUser.IssuedAtUtc is not null)
-        {
-            if (_currentUser.IssuedAtUtc <= gardener.LastLogoutUtc.Value)
-                throw new InvalidOperationException("User is not authenticated.");
-        }
+
         _dbContext.Gardeners.Remove(gardener);
 
         await _dbContext.SaveChangesAsync(cancellationToken);

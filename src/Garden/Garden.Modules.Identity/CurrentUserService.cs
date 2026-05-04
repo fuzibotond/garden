@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using Microsoft.AspNetCore.Http;
+using System.IdentityModel.Tokens.Jwt;
+using Garden.BuildingBlocks.Services;
 
 namespace Garden.Modules.Identity;
 
@@ -32,19 +32,6 @@ public class CurrentUserService : ICurrentUser
     public bool IsAuthenticated =>
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
-    public IReadOnlyCollection<string> Roles
-    {
-        get
-        {
-            var roles = _httpContextAccessor.HttpContext?.User?
-                .FindAll(ClaimTypes.Role)
-                .Select(c => c.Value)
-                .ToArray();
-
-            return roles ?? Array.Empty<string>();
-        }
-    }
-
     public DateTime? IssuedAtUtc
     {
         get
@@ -52,15 +39,14 @@ public class CurrentUserService : ICurrentUser
             var value = _httpContextAccessor.HttpContext?.User?
                 .FindFirstValue(JwtRegisteredClaimNames.Iat);
 
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
+            if (string.IsNullOrEmpty(value)) return null;
 
-            // iat is in seconds since epoch
-            if (long.TryParse(value, out var seconds))
+            // try parse as epoch seconds
+            if (long.TryParse(value, out var epoch))
             {
                 try
                 {
-                    return DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime;
+                    return DateTimeOffset.FromUnixTimeSeconds(epoch).UtcDateTime;
                 }
                 catch
                 {
@@ -68,6 +54,8 @@ public class CurrentUserService : ICurrentUser
                 }
             }
 
+            // fallback to DateTime parse
+            if (DateTime.TryParse(value, out var dt)) return dt.ToUniversalTime();
             return null;
         }
     }

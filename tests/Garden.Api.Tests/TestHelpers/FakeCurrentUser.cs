@@ -1,4 +1,4 @@
-using Garden.Modules.Identity;
+using Garden.BuildingBlocks.Services;
 
 namespace Garden.Api.Tests.TestHelpers;
 

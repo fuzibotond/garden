@@ -227,8 +227,7 @@ app.MapHealthChecks("/health/ready", readyHealthOptions);
 app.MapMetrics("/metrics");
 
 app.MapControllers();
-app.MapIdentityEndpoints();
-app.MapGardenersEndpoints(); 
+app.MapGardenersEndpoints();
 
 
 using (var scope = app.Services.CreateScope())

@@ -15,7 +15,7 @@ public class JwtTokenService : IJwtTokenService
         _configuration = configuration;
     }
 
-    public string GenerateToken(Guid userId, string email, IEnumerable<string> roles)
+    public string GenerateToken(Guid userId, string email, IEnumerable<string>? roles = null)
     {
         var key = _configuration["Jwt:Key"]
             ?? throw new InvalidOperationException("JWT key is missing.");
@@ -29,23 +29,21 @@ public class JwtTokenService : IJwtTokenService
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new(ClaimTypes.Email, email),
+            new(JwtRegisteredClaimNames.Email, email),
             new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Email, email)
         };
-        if (email.Equals("admin@admin.com", StringComparison.OrdinalIgnoreCase))
-        {
-            claims.Add(new Claim(ClaimTypes.Role, "Admin"));
-        }
 
-        // issued at (iat) as epoch seconds
-        var issuedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        claims.Add(new Claim(JwtRegisteredClaimNames.Iat, issuedAt.ToString(), ClaimValueTypes.Integer64));
+        // include issued at as epoch seconds
+        var issuedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString();
+        claims.Add(new Claim(JwtRegisteredClaimNames.Iat, issuedAt, ClaimValueTypes.Integer64));
 
-        // Include role claims
-        foreach (var role in roles ?? Array.Empty<string>())
+        if (roles != null)
         {
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
         }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
@@ -60,11 +58,5 @@ public class JwtTokenService : IJwtTokenService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
-    // Backwards-compatible two-argument overload that generates a token without roles.
-    public string GenerateToken(Guid userId, string email)
-    {
-        return GenerateToken(userId, email, Array.Empty<string>());
     }
 }

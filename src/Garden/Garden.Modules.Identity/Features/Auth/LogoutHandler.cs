@@ -1,4 +1,5 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Garden.Modules.Identity.Features.Auth;
@@ -6,9 +7,9 @@ namespace Garden.Modules.Identity.Features.Auth;
 public class LogoutHandler
 {
     private readonly GardenDbContext _dbContext;
-    private readonly ICurrentUser _currentUser;
+    private readonly Garden.BuildingBlocks.Services.ICurrentUser _currentUser;
 
-    public LogoutHandler(GardenDbContext dbContext, ICurrentUser currentUser)
+    public LogoutHandler(GardenDbContext dbContext, Garden.BuildingBlocks.Services.ICurrentUser currentUser)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;

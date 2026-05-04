@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Garden.Modules.Identity.Features.Auth;
-using Microsoft.AspNetCore.Routing;
 
 namespace Garden.Modules.Identity;
 
@@ -35,20 +33,6 @@ public static class ModuleExtensions
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
-        // Password hasher for clients
-        services.AddScoped<Microsoft.AspNetCore.Identity.IPasswordHasher<Garden.BuildingBlocks.Infrastructure.Persistence.ClientRecord>, Microsoft.AspNetCore.Identity.PasswordHasher<Garden.BuildingBlocks.Infrastructure.Persistence.ClientRecord>>();
-
-        // Shared auth handlers and services
-        services.AddScoped<LoginHandler>();
-        services.AddScoped<RegisterGardenerHandler>();
-        services.AddScoped<CreateClientHandler>();
-        services.AddScoped<Features.Profile.GetMyProfileHandler>();
-        services.AddScoped<Features.Profile.DeleteGardenerHandler>();
-        services.AddScoped<Features.Profile.UpdateMyProfileHandler>();
-        services.AddScoped<Features.Auth.LogoutHandler>();
-        services.AddScoped<Features.PushNotifications.RegisterPushTokenHandler>();
-        services.AddScoped<Services.IAuthService, Services.AuthService>();
-
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -69,18 +53,5 @@ public static class ModuleExtensions
         services.AddAuthorization();
 
         return services;
-    }
-
-    public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
-    {
-        var group = app.MapGroup("/api");
-        AuthLoginEndpoint.Map(group);
-        RegisterGardenerEndpoint.Map(group);
-        CreateClientEndpoint.Map(group);
-        Features.Profile.GetMyProfileEndpoint.Map(group);
-        Features.Profile.UpdateMyProfileEndpoint.Map(group);
-        Features.Profile.DeleteGardenerEndpoint.Map(group);
-        Features.Auth.LogoutEndpoint.Map(group);
-        return app;
     }
 }

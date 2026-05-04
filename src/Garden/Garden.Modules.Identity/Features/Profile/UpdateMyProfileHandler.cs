@@ -1,4 +1,5 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,11 @@ namespace Garden.Modules.Identity.Features.Profile;
 public class UpdateMyProfileHandler
 {
     private readonly GardenDbContext _dbContext;
-    private readonly ICurrentUser _currentUser;
+    private readonly Garden.BuildingBlocks.Services.ICurrentUser _currentUser;
 
     public UpdateMyProfileHandler(
         GardenDbContext dbContext,
-        ICurrentUser currentUser)
+        Garden.BuildingBlocks.Services.ICurrentUser currentUser)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
