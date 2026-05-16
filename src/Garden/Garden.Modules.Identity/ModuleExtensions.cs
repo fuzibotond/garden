@@ -1,6 +1,11 @@
 ﻿using System.Text;
+using Garden.Modules.Identity.Features.Auth;
+using Garden.Modules.Identity.Features.Profile;
+using Garden.Modules.Identity.Features.PushNotifications;
+using Garden.Modules.Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -29,9 +34,24 @@ public static class ModuleExtensions
         var jwtAudience = configuration["Jwt:Audience"] ?? "Garden.App";
 
         services.AddHttpContextAccessor();
-        services.AddScoped<ICurrentUser, CurrentUserService>();
+        services.AddScoped<Garden.BuildingBlocks.Services.ICurrentUser, CurrentUserService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+       services.AddScoped<IAuthService, AuthService>();
+
+        // Auth handlers
+        services.AddScoped<LoginHandler>();
+        services.AddScoped<LogoutHandler>();
+        services.AddScoped<RegisterGardenerHandler>();
+        services.AddScoped<CreateClientHandler>();
+
+        // Profile handlers
+        services.AddScoped<GetMyProfileHandler>();
+        services.AddScoped<UpdateMyProfileHandler>();
+        services.AddScoped<DeleteGardenerHandler>();
+
+        // Push notification handlers
+        services.AddScoped<RegisterPushTokenHandler>();
 
         services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -53,5 +73,19 @@ public static class ModuleExtensions
         services.AddAuthorization();
 
         return services;
+    }
+
+    public static IEndpointRouteBuilder MapIdentityEndpoints(this IEndpointRouteBuilder app)
+    {
+        var group = app.MapGroup("/api");
+        RegisterGardenerEndpoint.Map(group);
+        CreateClientEndpoint.Map(group);
+        AuthLoginEndpoint.Map(group);
+        LogoutEndpoint.Map(group);
+        GetMyProfileEndpoint.Map(group);
+        UpdateMyProfileEndpoint.Map(group);
+        DeleteGardenerEndpoint.Map(group);
+
+        return app;
     }
 }

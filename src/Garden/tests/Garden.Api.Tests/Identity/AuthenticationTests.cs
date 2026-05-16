@@ -1,5 +1,6 @@
 using Xunit;
 using Moq;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 using Garden.Modules.Identity.Features.Auth;
 using Garden.BuildingBlocks.Infrastructure.Persistence;

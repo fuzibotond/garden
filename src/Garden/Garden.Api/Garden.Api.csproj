@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Garden.BuildingBlocks\Garden.BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Garden.Modules.Catalog\Garden.Modules.Catalog.csproj" />
     <ProjectReference Include="..\Garden.Modules.Clients\Garden.Modules.Clients.csproj" />
     <ProjectReference Include="..\Garden.Modules.Gardeners\Garden.Modules.Gardeners.csproj" />
     <ProjectReference Include="..\Garden.Modules.Identity\Garden.Modules.Identity.csproj" />

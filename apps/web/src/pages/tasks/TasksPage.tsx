@@ -184,6 +184,38 @@ export default function TasksPage() {
     return map
   }, [taskTypes])
 
+  const createCostPreview = useMemo(() => {
+    const materialCost = createMaterialRows.reduce((sum, row) => {
+      const material = materials.find((m) => m.materialId === row.materialId)
+      const qty = parseFloat(row.usedQuantity)
+      if (!material || !Number.isFinite(qty) || qty <= 0) return sum
+      return sum + material.pricePerAmount * qty
+    }, 0)
+    const wage = parseFloat(createForm.wagePerHour)
+    const estMin = parseFloat(createForm.estimatedTimeMinutes)
+    const laborCost =
+      Number.isFinite(wage) && wage > 0 && Number.isFinite(estMin) && estMin > 0
+        ? (estMin / 60) * wage
+        : 0
+    return { materialCost, laborCost, totalCost: materialCost + laborCost }
+  }, [createMaterialRows, materials, createForm.wagePerHour, createForm.estimatedTimeMinutes])
+
+  const editCostPreview = useMemo(() => {
+    const materialCost = editMaterialRows.reduce((sum, row) => {
+      const material = materials.find((m) => m.materialId === row.materialId)
+      const qty = parseFloat(row.usedQuantity)
+      if (!material || !Number.isFinite(qty) || qty <= 0) return sum
+      return sum + material.pricePerAmount * qty
+    }, 0)
+    const wage = parseFloat(editForm.wagePerHour)
+    const actualMin = parseFloat(editForm.actualTimeMinutes)
+    const laborCost =
+      Number.isFinite(wage) && wage > 0 && Number.isFinite(actualMin) && actualMin > 0
+        ? (actualMin / 60) * wage
+        : 0
+    return { materialCost, laborCost, totalCost: materialCost + laborCost }
+  }, [editMaterialRows, materials, editForm.wagePerHour, editForm.actualTimeMinutes])
+
   const selectedJob = useMemo(() => jobs.find((job) => job.jobId === selectedJobId), [jobs, selectedJobId])
 
   const loadJobs = useCallback(async () => {
@@ -768,6 +800,23 @@ export default function TasksPage() {
                 fullWidth
               />
 
+              {(createCostPreview.materialCost > 0 || createCostPreview.laborCost > 0) && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>Materials</span><br />
+                    <strong>{formatCost(createCostPreview.materialCost)}</strong>
+                  </div>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>Labor (est.)</span><br />
+                    <strong>{formatCost(createCostPreview.laborCost)}</strong>
+                  </div>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>Est. Total</span><br />
+                    <strong style={{ color: "rgba(190,255,171,0.95)" }}>{formatCost(createCostPreview.totalCost)}</strong>
+                  </div>
+                </div>
+              )}
+
               {submitError && <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{submitError}</p>}
 
               <div style={{ display: "flex", gap: 12 }}>
@@ -957,6 +1006,23 @@ export default function TasksPage() {
                   </div>
                 ))}
               </div>
+
+              {(editCostPreview.materialCost > 0 || editCostPreview.laborCost > 0) && (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, padding: "10px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 8 }}>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>Materials (new)</span><br />
+                    <strong>{formatCost(editCostPreview.materialCost)}</strong>
+                  </div>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>Labor (new)</span><br />
+                    <strong>{formatCost(editCostPreview.laborCost)}</strong>
+                  </div>
+                  <div style={{ fontSize: 13 }}>
+                    <span style={{ opacity: 0.7 }}>New Total</span><br />
+                    <strong style={{ color: "rgba(190,255,171,0.95)" }}>{formatCost(editCostPreview.totalCost)}</strong>
+                  </div>
+                </div>
+              )}
 
               {submitError && <p style={{ color: "#fecaca", fontSize: 13, margin: 0 }}>{submitError}</p>}
 

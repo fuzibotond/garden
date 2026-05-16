@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Xunit;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
 using Garden.Modules.Identity.Features.Profile;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 
 namespace Garden.Modules.Identity.Tests

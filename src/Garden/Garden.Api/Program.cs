@@ -1,6 +1,7 @@
 using DotNetEnv;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
 using Garden.BuildingBlocks.Services;
+using Garden.Modules.Catalog;
 using Garden.Modules.Clients;
 using Garden.Modules.Gardeners;
 using Garden.Modules.Identity;
@@ -61,8 +62,9 @@ builder.Services.AddControllers()
     .AddApplicationPart(typeof(Garden.Modules.Identity.ModuleExtensions).Assembly)
     .AddApplicationPart(typeof(Garden.Modules.Tasks.ModuleExtensions).Assembly)
     .AddApplicationPart(typeof(Garden.Modules.Scheduling.ModuleExtensions).Assembly)
-    .AddApplicationPart(typeof(Garden.Modules.Materials.ModuleExtensions).Assembly);
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+    .AddApplicationPart(typeof(Garden.Modules.Materials.ModuleExtensions).Assembly)
+    .AddApplicationPart(typeof(Garden.Modules.Catalog.ModuleExtensions).Assembly);
+// Learn more about configuring OpenAPI
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 
@@ -72,6 +74,7 @@ builder.Services.AddClientsModule();
 builder.Services.AddTasksModule();
 builder.Services.AddSchedulingModule();
 builder.Services.AddMaterialsModule();
+builder.Services.AddCatalogModule();
 builder.Services.AddNotificationsModule(builder.Configuration);
 
 // Register API feature handlers
@@ -227,6 +230,7 @@ app.MapHealthChecks("/health/ready", readyHealthOptions);
 app.MapMetrics("/metrics");
 
 app.MapControllers();
+app.MapIdentityEndpoints();
 app.MapGardenersEndpoints();
 
 

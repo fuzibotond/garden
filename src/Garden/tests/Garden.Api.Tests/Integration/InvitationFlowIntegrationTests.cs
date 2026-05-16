@@ -2,6 +2,7 @@ using Xunit;
 using Garden.Modules.Clients.Controllers;
 using Garden.Api.Dto;
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

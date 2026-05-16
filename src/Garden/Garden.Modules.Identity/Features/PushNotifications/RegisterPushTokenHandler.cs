@@ -1,5 +1,5 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
-using Garden.Modules.Identity;
+using Garden.BuildingBlocks.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Garden.Modules.Identity.Features.PushNotifications;

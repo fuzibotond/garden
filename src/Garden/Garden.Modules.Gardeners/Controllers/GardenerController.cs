@@ -1,9 +1,7 @@
 using Garden.BuildingBlocks.Infrastructure.Persistence;
+using Garden.BuildingBlocks.Services;
 using Garden.Modules.Clients.Controllers;
 using Garden.Modules.Clients.Services;
-using Garden.Modules.Identity;
-
-// no dependency on Identity types here
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

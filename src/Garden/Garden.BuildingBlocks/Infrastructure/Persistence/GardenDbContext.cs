@@ -26,6 +26,7 @@ public class GardenDbContext : DbContext
     public DbSet<TaskAnswerRecord> TaskAnswers => Set<TaskAnswerRecord>();
     public DbSet<TaskQuestionMediaRecord> TaskQuestionMedia => Set<TaskQuestionMediaRecord>();
     public DbSet<TaskAnswerMediaRecord> TaskAnswerMedia => Set<TaskAnswerMediaRecord>();
+    public DbSet<PricingItemRecord> PricingItems => Set<PricingItemRecord>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -363,6 +364,33 @@ public class GardenDbContext : DbContext
 
             entity.HasIndex(x => x.AnswerId);
         });
+
+        modelBuilder.Entity<PricingItemRecord>(entity =>
+        {
+            entity.ToTable("PricingItems");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.GardenerId).IsRequired();
+            entity.Property(x => x.Name)
+                .HasMaxLength(512)
+                .IsRequired();
+            entity.Property(x => x.Description)
+                .HasMaxLength(2048)
+                .IsRequired(false);
+            entity.Property(x => x.Conditions)
+                .HasColumnType("nvarchar(max)")
+                .IsRequired(false);
+            entity.Property(x => x.PriceAmount)
+                .HasPrecision(18, 2)
+                .IsRequired();
+            entity.Property(x => x.PriceUnit)
+                .HasMaxLength(50)
+                .IsRequired();
+            entity.Property(x => x.CreatedAtUtc).IsRequired();
+            entity.Property(x => x.UpdatedAtUtc).IsRequired();
+
+            entity.HasIndex(x => x.GardenerId);
+        });
     }
 }
 
@@ -544,4 +572,18 @@ public class TaskAnswerMediaRecord
     public string MediaType { get; set; } = default!;
     public string FileName { get; set; } = default!;
     public DateTime UploadedAtUtc { get; set; }
+}
+
+public class PricingItemRecord
+{
+    public Guid Id { get; set; }
+    public Guid GardenerId { get; set; }
+    public string Name { get; set; } = default!;
+    public string? Description { get; set; }
+    /// <summary>JSON array of {key,value} condition pairs stored as nvarchar(4096).</summary>
+    public string? Conditions { get; set; }
+    public decimal PriceAmount { get; set; }
+    public string PriceUnit { get; set; } = default!;
+    public DateTime CreatedAtUtc { get; set; }
+    public DateTime UpdatedAtUtc { get; set; }
 }

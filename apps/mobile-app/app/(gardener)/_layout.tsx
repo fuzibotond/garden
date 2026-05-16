@@ -104,6 +104,13 @@ export default function GardenerLayout() {
         options={{ href: null }}
       />
       <Tabs.Screen
+        name="pricing"
+        options={{
+          title: 'Pricing',
+          tabBarIcon: ({ color }) => <IconSymbol size={20} name="tag.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',

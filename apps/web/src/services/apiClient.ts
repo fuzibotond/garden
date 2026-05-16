@@ -1050,6 +1050,70 @@ export function deleteGardenerMaterial(token: string, materialId: string) {
   })
 }
 
+// --- Gardener: Pricing ---
+export type PricingConditionDto = {
+  key: string
+  value: string
+}
+
+export type PricingItemDto = {
+  pricingItemId: string
+  name: string
+  description?: string
+  conditions: PricingConditionDto[]
+  priceAmount: number
+  priceUnit: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreatePricingItemRequest = {
+  name: string
+  description?: string
+  conditions: PricingConditionDto[]
+  priceAmount: number
+  priceUnit: string
+}
+
+export type UpdatePricingItemRequest = {
+  name?: string
+  description?: string
+  conditions?: PricingConditionDto[]
+  priceAmount?: number
+  priceUnit?: string
+}
+
+export function getGardenerPricingItems(token: string, page = 1, pageSize = 20) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
+  return apiRequest<{ items: PricingItemDto[]; total: number; page: number; pageSize: number }>(
+    `/api/gardener/pricing?${params.toString()}`,
+    { method: "GET", token },
+  )
+}
+
+export function createGardenerPricingItem(token: string, body: CreatePricingItemRequest) {
+  return apiRequest<PricingItemDto>("/api/gardener/pricing", {
+    method: "POST",
+    body,
+    token,
+  })
+}
+
+export function updateGardenerPricingItem(token: string, pricingItemId: string, body: UpdatePricingItemRequest) {
+  return apiRequest<PricingItemDto>(`/api/gardener/pricing/${pricingItemId}`, {
+    method: "PUT",
+    body,
+    token,
+  })
+}
+
+export function deleteGardenerPricingItem(token: string, pricingItemId: string) {
+  return apiRequest<void>(`/api/gardener/pricing/${pricingItemId}`, {
+    method: "DELETE",
+    token,
+  })
+}
+
 // --- Admin: Relationships ---
 export type RelationshipDto = {
   clientId: string

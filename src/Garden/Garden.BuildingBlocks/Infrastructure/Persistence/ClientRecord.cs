@@ -7,4 +7,6 @@ public class ClientRecord
     public string Name { get; set; } = default!;
     public string PasswordHash { get; set; } = default!;
     public DateTime CreatedAtUtc { get; set; }
+    public DateTime? LastLogoutUtc { get; set; }
+    public string? ExpoPushToken { get; set; }
 }

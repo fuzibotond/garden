@@ -59,4 +59,11 @@ public class CurrentUserService : ICurrentUser
             return null;
         }
     }
+
+    public IReadOnlyCollection<string> Roles =>
+        _httpContextAccessor.HttpContext?.User?.Claims
+            .Where(c => c.Type == ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList()
+            .AsReadOnly() ?? (IReadOnlyCollection<string>)Array.Empty<string>();
 }

@@ -11,6 +11,7 @@ import JobsPage from "../../pages/jobs/JobsPage"
 import LandingPage from "../../pages/landing/LandingPage"
 import LoginPage from "../../pages/login/LoginPage"
 import MaterialsPage from "../../pages/materials/MaterialsPage"
+import PricingPage from "../../pages/pricing/PricingPage"
 import ProfilePage from "../../pages/profile/ProfilePage"
 import ClientSchedulingPage from "../../pages/scheduling/ClientSchedulingPage"
 import GardenerSchedulingPage from "../../pages/scheduling/GardenerSchedulingPage"
@@ -69,6 +70,7 @@ export default function AppRouter() {
 
         <Route element={<ProtectedRoute allowedRoles={["Admin", "Gardener"]} />}>
           <Route path="/admin/materials" element={<MaterialsPage />} />
+          <Route path="/admin/pricing" element={<PricingPage />} />
           <Route path="/gardener/scheduling" element={<GardenerSchedulingPage />} />
           <Route path="/gardener/questions" element={<GardenerQuestionsPage />} />
         </Route>

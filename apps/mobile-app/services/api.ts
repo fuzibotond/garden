@@ -622,3 +622,48 @@ export const answerQuestion = (token: string, questionId: string, body: AnswerQu
     body: { answerText: body.text },
     token,
   })
+
+// ─── Gardener: Pricing ────────────────────────────────────────────────────────
+
+export type PricingConditionDto = { key: string; value: string }
+
+export type PricingItemDto = {
+  pricingItemId: string
+  name: string
+  description?: string
+  conditions: PricingConditionDto[]
+  priceAmount: number
+  priceUnit: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreatePricingItemRequest = {
+  name: string
+  description?: string
+  conditions: PricingConditionDto[]
+  priceAmount: number
+  priceUnit: string
+}
+
+export type UpdatePricingItemRequest = {
+  name?: string
+  description?: string
+  conditions?: PricingConditionDto[]
+  priceAmount?: number
+  priceUnit?: string
+}
+
+export const getGardenerPricingItems = (token: string, page = 1, pageSize = 20) =>
+  request<{ items: PricingItemDto[]; total: number; page: number; pageSize: number }>(
+    `/api/gardener/pricing?page=${page}&pageSize=${pageSize}`, { token },
+  )
+
+export const createGardenerPricingItem = (token: string, body: CreatePricingItemRequest) =>
+  request<PricingItemDto>('/api/gardener/pricing', { method: 'POST', body, token })
+
+export const updateGardenerPricingItem = (token: string, pricingItemId: string, body: UpdatePricingItemRequest) =>
+  request<PricingItemDto>(`/api/gardener/pricing/${pricingItemId}`, { method: 'PUT', body, token })
+
+export const deleteGardenerPricingItem = (token: string, pricingItemId: string) =>
+  request<void>(`/api/gardener/pricing/${pricingItemId}`, { method: 'DELETE', token })

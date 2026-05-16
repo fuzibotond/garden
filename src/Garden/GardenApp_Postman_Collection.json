@@ -852,6 +852,78 @@
       ]
     },
     {
+      "name": "Gardener - Pricing",
+      "description": "Price template management for gardeners. Define reusable price items with conditions (e.g. height, tool type).",
+      "item": [
+        {
+          "name": "Create Pricing Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hedge trimming\",\n  \"description\": \"Standard hedge trimming with own tools\",\n  \"priceAmount\": 35,\n  \"priceUnit\": \"DKK/m\",\n  \"conditions\": [\n    { \"key\": \"height\", \"value\": \">200cm\" },\n    { \"key\": \"tools\", \"value\": \"own\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/pricing",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "pricing"]
+            }
+          }
+        },
+        {
+          "name": "Get All Pricing Items",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/pricing?page=1&pageSize=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "pricing"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "pageSize", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Pricing Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Hedge trimming (updated)\",\n  \"priceAmount\": 40,\n  \"priceUnit\": \"DKK/m\",\n  \"conditions\": [\n    { \"key\": \"height\", \"value\": \">200cm\" }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/gardener/pricing/{{pricing_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "pricing", "{{pricing_item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Pricing Item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/gardener/pricing/{{pricing_item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "gardener", "pricing", "{{pricing_item_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "Gardener - Scheduling",
       "description": "Schedule request management for gardeners. Create schedule requests which trigger email notifications to clients.",
       "item": [
